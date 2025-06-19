@@ -9,7 +9,7 @@ const productController = {
       const perPage = parseInt(req.query.perPage);
       const [rows] = await sqlPool.query(
         `Select id, productNameEn, productNameGe, productNameRu, productModel, (select imgUrl from productimages where products.id=productimages.productId LIMIT 0,1) as imgUrl From products LIMIT ? OFFSET ?`,
-        [page, (page - 1) * perPage]
+        [perPage, (page - 1) * perPage]
       );
       const [rowsCount] = await sqlPool.query(
         `Select count(*) as total From products`
@@ -35,7 +35,7 @@ const productController = {
 
   addProduct: async (req, res) => {
     try {
-      const {
+      let {
         productNameEn,
         productNameGe,
         productNameRu,
@@ -61,6 +61,16 @@ const productController = {
         optionsGe,
         optionsRu,
       } = req.body;
+
+      if(!productCount || productCount==null || productCount=="" || productCount=='') productCount=0;
+      if(!productNewPrice || productNewPrice==null || productNewPrice=="" || productNewPrice=='') productNewPrice=0;
+      if(!productPrice || productPrice==null || productPrice=="" || productPrice=='') productPrice=0;
+
+      // if(!productDiscount) productDiscount=0;
+      // if(!productInStock) productInStock=0;
+      // if(!productMultyDimension) productMultyDimension=0;
+      // if(!productOnTop) productOnTop=0;
+
       const [result] = await sqlPool.query(
         `INSERT INTO products(productNameEn, productNameGe, productNameRu, productModel, productBrand,
            productCountryEn, productCountryGe, productCountryRu,productMultyDimension, productDimension, productWeight,  
@@ -104,7 +114,7 @@ const productController = {
 
   updateProduct: async (req, res) => {
     try {
-      const {
+      let {
         productNameEn,
         productNameGe,
         productNameRu,
@@ -130,7 +140,18 @@ const productController = {
         optionsGe,
         optionsRu,
       } = req.body;
+
+      if(!productCount || productCount==null || productCount=="" || productCount=='') productCount=0;
+       if(!productNewPrice || productNewPrice==null || productNewPrice=="" || productNewPrice=='') productNewPrice=0;
+       if(!productPrice || productPrice==null || productPrice=="" || productPrice=='') productPrice=0;
+      
       const { id } = req.params;
+      try{
+
+      }catch(e){
+        console.log(e);
+        
+      }
       const [result] = await sqlPool.query(
         `UPDATE products SET productNameEn=?, productNameGe=?, productNameRu=?, productModel=?,
             productBrand=?, productCountryEn=?,productCountryGe=?, productCountryRu=?,productMultyDimension=?, 

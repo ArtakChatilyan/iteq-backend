@@ -23,9 +23,10 @@ const userService = {
       "insert into users(email, password,name, phone, activationLink, role) values (?,?,?,?,?,?)",
       [email, hashPassword, name, phone, activationLink, 0]
     );
+    
     //await mailService.sendActivationMail(email, activationLink);
     await mailService.sendActivationMail(
-      "artak.chatilyan@gmail.com",
+      email,
       `${process.env.API_URL}/api/v1/users/activate/${activationLink}`
     );
 
@@ -98,12 +99,11 @@ const userService = {
   },
   refresh: async (token) => {
     if (!token) throw ApiError.UnauhtorizedError();
-
     const userData = tokenValidation.validateRefreshToken(token);
-
     const [tokens] = await sqlPool.query("select * from tokens where token=?", [
-      token,
+      token
     ]);
+    
     if (userData && tokens.length > 0) {
       const newTokens = tokenService.genearteTokens({
         id: userData.id,

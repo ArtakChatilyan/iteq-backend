@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const router = express.Router();
 
-const multer  = require('multer')
+const multer = require("multer");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -18,7 +18,12 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 20 * 1024 * 1024
+  },
+});
 const categoryController = require("../controllers/categories.controller");
 
 router.get("/", categoryController.getCategories);
@@ -27,10 +32,10 @@ router.get("/all", categoryController.getCategoriesForProduct);
 
 router.get("/:id", categoryController.getCategory);
 
-router.post("/",upload.single("imgUrl"), categoryController.addCategory);
+router.post("/", upload.single("imgUrl"), categoryController.addCategory);
 
-router.put("/:id",upload.single("imgUrl"), categoryController.updateCategory);
+router.put("/:id", upload.single("imgUrl"), categoryController.updateCategory);
 
 router.delete("/:id", categoryController.deleteCategory);
 
-module.exports=router;
+module.exports = router;

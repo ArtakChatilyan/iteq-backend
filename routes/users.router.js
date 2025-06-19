@@ -7,7 +7,7 @@ const { body } = require("express-validator");
 router.post(
   "/registration",
   body("email").isEmail(),
-  body("password").isLength({ min: 3, max: 32 }),
+  body("password").isLength({ min: 3, max: 16 }),
   userCntroller.registration
 );
 router.post("/login", userCntroller.login);

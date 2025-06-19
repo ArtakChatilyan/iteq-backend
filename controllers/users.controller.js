@@ -1,10 +1,4 @@
-const sqlPool = require("../database");
-const bcrypt = require("bcrypt");
-const uuid = require("uuid");
-const jwt = require("jsonwebtoken");
 const userService = require("../service/user.service");
-const nodemailer = require("nodemailer");
-const tokenValidation = require("../middlewares/tokenValidation");
 const { validationResult } = require("express-validator");
 const ApiError = require("../middlewares/api-error");
 

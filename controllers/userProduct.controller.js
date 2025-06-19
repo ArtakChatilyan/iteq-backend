@@ -12,19 +12,50 @@ const productController = {
       if (brands.length > 0) {
         brandIds = brands.split(",");
       }
-      // const [products] = await sqlPool.query(
-      //   `Select products.id, productNameEn, productNameGe, productNameRu, productModel, productPrice, productInStock, productDiscount, productNewPrice,
-      //   (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
-      //   From products inner join productcategories ON products.id=productcategories.productId and productcategories.categoryId=? LIMIT ? OFFSET ?`,
-      //   [catId, perPage, (page - 1) * perPage]
-      // );
 
       const [products] = await sqlPool.query(
-        `Select products.id, productNameEn, productNameGe, productNameRu, productModel, productPrice, productInStock, productDiscount, productNewPrice, 
+        `Select products.id, productNameEn, productNameGe, productNameRu, productModel,productMultyDimension, productPrice, productInStock, productDiscount, productNewPrice, 
         (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
         From products inner join productcategories ON products.id=productcategories.productId and productcategories.categoryId=?`,
         [catId]
       );
+
+      for (let i = 0; i < products.length; i++) {
+        if (products[i].productMultyDimension === 1) {
+          const [sizes] = await sqlPool.query(
+            "select * from productsizes where productId=?",
+            [products[i].id]
+          );
+          if (sizes.length > 0) {
+            const minDiscountSize = sizes
+              .filter((s) => s.discount === 1)
+              .sort((a, b) => a["newPrice"] - b["newPrice"])[0];
+            const minSize = sizes
+              .filter((s) => s.discount === 0)
+              .sort((a, b) => a["price"] - b["price"])[0];
+            if (!minDiscountSize) {
+              products[i].viewInfo = minSize;
+            } else if (!minSize) {
+              products[i].viewInfo = minDiscountSize;
+            } else {
+              products[i].viewInfo =
+                minDiscountSize.newPrice > minSize.price
+                  ? minSize
+                  : minDiscountSize;
+            }
+          }
+        } else {
+          products[i].viewInfo = {
+            count: products[i].productCount,
+            dimension: products[i].productDimension,
+            weight: products[i].productWeight,
+            discount: products[i].productDiscount,
+            inStock: products[i].productInStock,
+            price: products[i].productPrice,
+            newPrice: products[i].productNewPrice,
+          };
+        }
+      }
 
       if (brandIds.length > 0) {
         products = products.filter((p) => brandIds.includes(p.productBrand));
@@ -116,69 +147,6 @@ const productController = {
       console.log(error);
       res.json({ state: error });
     }
-
-    // try {
-    //   let result, resultCount, resultPrice;
-    //   let query, queryCount, queryPrice, brandIds;
-    //   const { brands, minPrice, maxPrice } = req.query;
-
-    //   let priceStatement = "";
-    //   if (minPrice > -1) {
-    //     // if multidimension
-    //     priceStatement = ` and products.productPrice>=${minPrice} and products.productPrice<=${maxPrice} `;
-    //   }
-
-    //   if (brands.length > 0) {
-    //     brandIds = brands.split(",");
-    //     let brandStatement = "?";
-
-    //     for (let i = 1; i < brandIds.length; i++) brandStatement += ",?";
-
-    //     query = `Select products.id, productNameEn, productNameGe, productNameRu, productModel, productPrice, productInStock, productDiscount, productNewPrice,
-    //     (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
-    //     From products inner join productcategories ON products.id=productcategories.productId and productcategories.categoryId=${
-    //       req.query.catId
-    //     } where products.productBrand in (${brandStatement}) ${priceStatement} LIMIT ${
-    //       req.query.perPage
-    //     } OFFSET ${(req.query.page - 1) * req.query.perPage}`;
-
-    //     queryCount = `Select count(*) as total From products inner join productcategories ON products.id=productcategories.productId and productcategories.categoryId=${req.query.catId} where products.productBrand in (${brandStatement}) ${priceStatement}`;
-    //     queryPrice = `Select MIN(productPrice) as minPrice,MAX(productPrice) as maxPrice  From products inner join productcategories ON products.id=productcategories.productId and productcategories.categoryId=${req.query.catId} where products.productBrand in (${brandStatement})`;
-
-    //     result = await sqlPool.query(query, [
-    //       ...brandIds.map((i) => parseInt(i)),
-    //     ]);
-    //     resultCount = await sqlPool.query(queryCount, [
-    //       ...brandIds.map((i) => parseInt(i)),
-    //     ]);
-    //     resultPrice = await sqlPool.query(queryPrice, [
-    //       ...brandIds.map((i) => parseInt(i)),
-    //     ]);
-    //   } else {
-    //     query = `Select products.id, productNameEn, productNameGe, productNameRu, productModel, productPrice, productInStock, productDiscount, productNewPrice, (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
-    //     From products inner join productcategories ON products.id=productcategories.productId and productcategories.categoryId=${
-    //       req.query.catId
-    //     } ${priceStatement}  LIMIT ${req.query.perPage} OFFSET ${
-    //       (req.query.page - 1) * req.query.perPage
-    //     }`;
-
-    //     queryCount = `Select count(*) as total From products inner join productcategories ON products.id=productcategories.productId and productcategories.categoryId=${req.query.catId} ${priceStatement}`;
-    //     queryPrice = `Select MIN(productPrice) as minPrice,MAX(productPrice) as maxPrice  From products inner join productcategories ON products.id=productcategories.productId and productcategories.categoryId=${req.query.catId}`;
-    //     result = await sqlPool.query(query);
-    //     resultCount = await sqlPool.query(queryCount);
-    //     resultPrice = await sqlPool.query(queryPrice);
-    //   }
-
-    //   res.json({
-    //     products: result[0],
-    //     total: resultCount[0][0].total,
-    //     minPrice: resultPrice[0][0].minPrice,
-    //     maxPrice: resultPrice[0][0].maxPrice,
-    //   });
-    // } catch (error) {
-    //   console.log(error);
-    //   res.json({ state: error });
-    // }
   },
   getProductCategories: async (req, res) => {
     try {
@@ -206,9 +174,7 @@ const productController = {
         "Select * from brands where brands.id=?",
         [product[0].productBrand]
       );
-      // const [product] = await sqlPool.query(`Select *, brandName, brandUrl From products inner join brands on products.productBrand=brands.id WHERE products.id=?`, [
-      //   req.params.id,
-      // ]);
+      
       const [images] = await sqlPool.query(
         `Select * From productimages WHERE productId=?`,
         [req.params.id]

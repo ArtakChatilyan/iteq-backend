@@ -1,7 +1,7 @@
 const express = require("express");
 const path = require("path");
-const cors = require("cors");
 const app = express();
+const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dataAccess = require("./database");
 const errorMiddleware=require('./middlewares/error-middleware.js');
@@ -9,10 +9,11 @@ const errorMiddleware=require('./middlewares/error-middleware.js');
 app.use(
   cors({
     credentials: true,
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: "*",
+    methods: ["GET, POST, PUT, DELETE"],
   })
 );
+
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cookieParser());
@@ -25,6 +26,7 @@ const sliderRouter = require("./routes/slider.router");
 const partnerRouter = require("./routes/partners.router");
 const portfolioRouter = require("./routes/portfolio.router");
 const newsRouter = require("./routes/news.router");
+const settingsRouter=require("./routes/settings.router");
 
 const userCategoryRouter = require("./routes/userCategories.router");
 const userProductRouter = require("./routes/userProducts.router");
@@ -56,6 +58,7 @@ app.use("/api/v1/slides", sliderRouter);
 app.use("/api/v1/partners", partnerRouter);
 app.use("/api/v1/portfolio", portfolioRouter);
 app.use("/api/v1/news", newsRouter);
+app.use("/api/v1/settings", settingsRouter);
 
 app.use("/api/v1/user/categories", userCategoryRouter);
 app.use("/api/v1/user/products", userProductRouter);

@@ -45,6 +45,8 @@ const categoryController = {
 
   addCategory: async (req, res) => {
     try {
+      
+      
       const { nameEn, nameGe, nameRu, onTop } = req.body;
       const imgUrl =
         req.protocol +
@@ -52,14 +54,13 @@ const categoryController = {
         req.get("host") +
         "/categories/" +
         req.file.filename;
-
+console.log("adding....");
       const [result] = await sqlPool.query(
-        `INSERT INTO categories(nameEn, nameGe, nameRu, imgUrl, onTop) VALUES (?,?,?,?,?)`,
-        [nameEn, nameGe, nameRu, imgUrl, onTop === "true"]
+        `INSERT INTO categories(nameEn, nameGe, nameRu, imgUrl, onTop, parentId) VALUES (?,?,?,?,?,?)`,
+        [nameEn, nameGe, nameRu, imgUrl, onTop === "true", 0]
       );
       res.json({ id: result.insertId });
     } catch (error) {
-      console.log(error);
       res.json({ state: error });
     }
   },
@@ -75,6 +76,8 @@ const categoryController = {
         : "";
 
       const { nameEn, nameGe, nameRu, onTop } = req.body;
+      console.log("onTop:"+onTop);
+      
       const { id } = req.params;
       if (imgUrl) {
         const [images] = await sqlPool.query(
