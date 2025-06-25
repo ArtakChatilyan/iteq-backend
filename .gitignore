@@ -1,2 +1,7 @@
 .env
 brands/*.*
+categories/*.*
+news/*.*
+products/*.*
+partners/*.*
+portfolio/*.*
