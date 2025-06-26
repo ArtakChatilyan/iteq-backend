@@ -14,4 +14,6 @@ router.put('/:id', colorController.updateColor);
 
 router.delete('/:id', colorController.deleteColor);
 
+router.get('/productColors/:id', colorController.getProductColors);
+
 module.exports=router;

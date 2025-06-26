@@ -53,9 +53,11 @@ router.get('/productImages/:id', productController.getProductImages);
 
 router.post('/productImages',upload.single("imgUrl"), productController.addProductImage);
 
-router.get('/productImageColorsSize/:id', productController.getImageColorSize);
+router.get('/productImageColorSize/:id', productController.getImageColorSize);
 
-router.post('/productImageColorsSize', productController.setImageColorSize);
+router.post('/productImageColorSize', productController.setImageColorSize);
+
+router.delete('/productImageColorSize/:id', productController.deleteImageColorSize);
 
 router.delete('/productImage/:id', productController.deleteProductImage);
 

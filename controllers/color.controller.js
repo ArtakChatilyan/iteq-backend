@@ -6,7 +6,6 @@ const colorController = {
       const [rows] = await sqlPool.query(
         "select * from colors order by nameRu"
       );
-
       res.json({ colors: rows });
     } catch (error) {
       console.log(error);
@@ -64,7 +63,26 @@ const colorController = {
       const [result] = await sqlPool.query(`DELETE FROM colors WHERE id = ?`, [
         id,
       ]);
+      await sqlPool.query(`DELETE FROM imagecolorsize WHERE colorId = ?`, [
+        id,
+      ]);
+      await sqlPool.query(`DELETE FROM productcolors WHERE colorId = ?`, [
+        id,
+      ]);
       res.json({ data: result });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
+  getProductColors: async (req, res) => {
+    try {
+      const [rows] = await sqlPool.query(
+        `Select colors.id, nameEn, nameGe, nameRu From colors inner join productcolors on colors.id=productcolors.colorId WHERE productcolors.productId=?`,
+        [req.params.id]
+      );
+      res.json({ colors: rows });
     } catch (error) {
       console.log(error);
       res.json({ state: error });

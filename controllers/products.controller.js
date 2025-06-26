@@ -8,7 +8,7 @@ const productController = {
       const page = parseInt(req.query.page);
       const perPage = parseInt(req.query.perPage);
       const [rows] = await sqlPool.query(
-        `Select id, productNameEn, productNameGe, productNameRu, productModel, (select imgUrl from productimages where products.id=productimages.productId LIMIT 0,1) as imgUrl From products LIMIT ? OFFSET ?`,
+        `Select id, productNameEn, productNameGe, productNameRu, productModel,productMultyDimension,productMultyColor, (select imgUrl from productimages where products.id=productimages.productId LIMIT 0,1) as imgUrl From products LIMIT ? OFFSET ?`,
         [perPage, (page - 1) * perPage]
       );
       const [rowsCount] = await sqlPool.query(
@@ -44,6 +44,7 @@ const productController = {
         productCountryEn,
         productCountryGe,
         productCountryRu,
+        productMultyColor,
         productMultyDimension,
         productDimension,
         productWeight,
@@ -91,10 +92,10 @@ const productController = {
 
       const [result] = await sqlPool.query(
         `INSERT INTO products(productNameEn, productNameGe, productNameRu, productModel, productBrand,
-           productCountryEn, productCountryGe, productCountryRu,productMultyDimension, productDimension, productWeight,  
+           productCountryEn, productCountryGe, productCountryRu,productMultyColor,productMultyDimension, productDimension, productWeight,  
            productPrice, productInStock,productCount, productDiscount, productNewPrice, productOnTop,productDescriptionEn,
           productDescriptionGe, productDescriptionRu) 
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [
           productNameEn,
           productNameGe,
@@ -104,6 +105,7 @@ const productController = {
           productCountryEn,
           productCountryGe,
           productCountryRu,
+          productMultyColor,
           productMultyDimension,
           productMultyDimension ? "" : productDimension,
           productMultyDimension ? "" : productWeight,
@@ -141,6 +143,7 @@ const productController = {
         productCountryEn,
         productCountryGe,
         productCountryRu,
+        productMultyColor,
         productMultyDimension,
         productDimension,
         productWeight,
@@ -188,7 +191,7 @@ const productController = {
       }
       const [result] = await sqlPool.query(
         `UPDATE products SET productNameEn=?, productNameGe=?, productNameRu=?, productModel=?,
-            productBrand=?, productCountryEn=?,productCountryGe=?, productCountryRu=?,productMultyDimension=?, 
+            productBrand=?, productCountryEn=?,productCountryGe=?, productCountryRu=?,productMultyColor=?, productMultyDimension=?, 
             productDimension=?, productWeight=?, productPrice=?,productInStock=?, productDiscount=?,productNewPrice=?, 
             productCount=?, productOnTop=?, productDescriptionEn=?, productDescriptionGe=?, productDescriptionRu=? WHERE id=?`,
         [
@@ -200,6 +203,7 @@ const productController = {
           productCountryEn,
           productCountryGe,
           productCountryRu,
+          productMultyColor,
           productMultyDimension,
           productMultyDimension ? "" : productDimension,
           productMultyDimension ? "" : productWeight,
@@ -234,7 +238,7 @@ const productController = {
       const { id } = req.params;
 
       const [images] = await sqlPool.query(
-        `Select imgUrl FROM productimages WHERE productId= ?`,
+        `Select id, imgUrl FROM productimages WHERE productId= ?`,
         [id]
       );
       for (let i = 0; i < images.length; i++) {
@@ -246,6 +250,10 @@ const productController = {
             }
           });
         }
+
+        await sqlPool.query(`DELETE FROM imagecolorsize WHERE imageId =?`, [
+        images[i].id,
+      ]);
       }
       await sqlPool.query(`DELETE FROM productimages WHERE productId =?`, [id]);
       await sqlPool.query(`DELETE FROM productcategories WHERE productId =?`, [
@@ -253,6 +261,10 @@ const productController = {
       ]);
       await sqlPool.query(`DELETE FROM productsizes WHERE productId =?`, [id]);
       const [result] = await sqlPool.query(`DELETE FROM products WHERE id =?`, [
+        id,
+      ]);
+
+      await sqlPool.query(`DELETE FROM productcolors WHERE productId =?`, [
         id,
       ]);
       res.json({ data: result });
@@ -351,6 +363,10 @@ const productController = {
         `DELETE FROM productsizes WHERE id =?`,
         [id]
       );
+       await sqlPool.query(
+        `DELETE FROM imagecolorsize WHERE sizeId =?`,
+        [id]
+      );
       res.json({ data: result });
     } catch (error) {
       console.log(error);
@@ -436,14 +452,30 @@ const productController = {
 
   setImageColorSize: async (req, res) => {
     try {
-      const { id, result } = req.body;
-      await sqlPool.query(`delete from imagecolorsize where imageId=?`, [id]);
-      for (let i = 0; i < result.length; i++) {
-        await sqlPool.query(
-          `insert into imagecolorsize(imageId, colorId, sizeId) values(?,?,?)`,
-          [id, result[i]]
-        );
-      }
+      const { imageId, color, size } = req.body;
+
+      await sqlPool.query(
+        `insert into imagecolorsize(imageId, colorId, sizeId) values(?,?,?)`,
+        [
+          imageId,
+          color ? color.substring(3) : null,
+          size ? size.substring(3) : null,
+        ]
+      );
+
+      res.json({ message: "done!" });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
+  deleteImageColorSize: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      await sqlPool.query(`delete from imagecolorsize where id=?`, [id]);
+
       res.json({ message: "done!" });
     } catch (error) {
       console.log(error);
@@ -506,6 +538,11 @@ const productController = {
 
       const [result] = await sqlPool.query(
         `DELETE FROM productimages WHERE id= ?`,
+        [id]
+      );
+
+      await sqlPool.query(
+        `DELETE FROM imagecolorsize WHERE imageId= ?`,
         [id]
       );
 
