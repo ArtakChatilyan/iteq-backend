@@ -252,8 +252,8 @@ const productController = {
         }
 
         await sqlPool.query(`DELETE FROM imagecolorsize WHERE imageId =?`, [
-        images[i].id,
-      ]);
+          images[i].id,
+        ]);
       }
       await sqlPool.query(`DELETE FROM productimages WHERE productId =?`, [id]);
       await sqlPool.query(`DELETE FROM productcategories WHERE productId =?`, [
@@ -264,9 +264,7 @@ const productController = {
         id,
       ]);
 
-      await sqlPool.query(`DELETE FROM productcolors WHERE productId =?`, [
-        id,
-      ]);
+      await sqlPool.query(`DELETE FROM productcolors WHERE productId =?`, [id]);
       res.json({ data: result });
     } catch (error) {
       console.log(error);
@@ -363,10 +361,7 @@ const productController = {
         `DELETE FROM productsizes WHERE id =?`,
         [id]
       );
-       await sqlPool.query(
-        `DELETE FROM imagecolorsize WHERE sizeId =?`,
-        [id]
-      );
+      await sqlPool.query(`DELETE FROM imagecolorsize WHERE sizeId =?`, [id]);
       res.json({ data: result });
     } catch (error) {
       console.log(error);
@@ -390,17 +385,40 @@ const productController = {
   setProductCategories: async (req, res) => {
     try {
       const { id, result } = req.body;
-      await sqlPool.query(`delete from productcategories where productId=?`, [
-        id,
-      ]);
-      for (let i = 0; i < result.length; i++) {
-        await sqlPool.query(
-          `insert into productcategories(productId, categoryId) values(?,?)`,
-          [id, result[i]]
-        );
 
-        await sqlPool.query(`call insertProdCat(?,?)`, [id, result[i]]);
+      const finalResult = [];
+      for (let i = 0; i < result.length; i++) {
+        finalResult.push(result[i]);
+
+        let [parentiData] = await sqlPool.query(
+          "select parentId from categories where id=?",
+          [result[i]]
+        );
+        let parentId = parentiData[0].parentId;
+        while (parentId > 0) {
+          finalResult.push(parentId);
+          [parentiData] = await sqlPool.query(
+            "select parentId from categories where id=?",
+            [parentId]
+          );
+          parentId = parentiData[0].parentId;
+        }
       }
+      const uniqueResult = [...new Set(finalResult)];
+
+      for (let i = 0; i < uniqueResult.length; i++) {
+        let [duplicate] = await sqlPool.query(
+          "select count(*) as total from productcategories where productId=? and categoryId=?",
+          [id, uniqueResult[i]]
+        );
+        if (duplicate[0].total == 0) {
+          await sqlPool.query(
+            `insert into productcategories(productId, categoryId) values(?,?)`,
+            [id, uniqueResult[i]]
+          );
+        }
+      }
+      //await sqlPool.query(`call insertProdCat(?,?)`, [id, result[i]]);
       res.json({ message: "done!" });
     } catch (error) {
       console.log(error);
@@ -541,10 +559,7 @@ const productController = {
         [id]
       );
 
-      await sqlPool.query(
-        `DELETE FROM imagecolorsize WHERE imageId= ?`,
-        [id]
-      );
+      await sqlPool.query(`DELETE FROM imagecolorsize WHERE imageId= ?`, [id]);
 
       res.json({ data: result });
     } catch (error) {

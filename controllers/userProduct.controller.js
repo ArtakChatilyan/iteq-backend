@@ -174,11 +174,16 @@ const productController = {
         "Select * from brands where brands.id=?",
         [product[0].productBrand]
       );
-      
-      const [images] = await sqlPool.query(
-        `Select * From productimages WHERE productId=?`,
+
+      // const [images] = await sqlPool.query(
+      //   `Select * From productimages WHERE productId=?`,
+      //   [req.params.id]
+      // );
+      const [colors] = await sqlPool.query(
+        `Select colors.id, colors.nameEn, colors.nameGe, colors.nameRu, colors.iconUrl From colors inner join productcolors on colors.id=productcolors.colorId WHERE productcolors.productId=?`,
         [req.params.id]
       );
+
       const [sizes] = await sqlPool.query(
         `Select * From productsizes WHERE productId=?`,
         [req.params.id]
@@ -187,9 +192,60 @@ const productController = {
       res.json({
         product: product[0],
         brand: brand[0],
-        images: images,
+        colors: colors,
         sizes: sizes,
       });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+  getImagesDefault: async (req, res) => {
+    try {
+      const [images] = await sqlPool.query(
+        `Select * From productimages WHERE productId=?`,
+        [req.params.id]
+      );
+      res.json({images: images});
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+  getImagesByColor: async (req, res) => {
+    try {
+      const [images] = await sqlPool.query(
+        `Select productimages.id, imagecolorsize.colorId, productimages.productId, productimages.imgUrl From productimages inner join imagecolorsize
+        on productImages.id=imagecolorsize.imageId WHERE productimages.productId=?`,
+        [req.params.id]
+      );
+      res.json({images: images});
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+  getImagesBySize: async (req, res) => {
+    try {
+      const [images] = await sqlPool.query(
+        `Select productimages.id, imagecolorsize.sizeId, productimages.productId, productimages.imgUrl From productimages inner join imagecolorsize
+        on productImages.id=imagecolorsize.imageId WHERE productimages.productId=?`,
+        [req.params.id]
+      );
+      res.json({images: images});
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+  getImagesMix: async (req, res) => {
+    try {
+      const [images] = await sqlPool.query(
+        `Select productimages.id, imagecolorsize.sizeId, imagecolorsize.colorId, productimages.productId, productimages.imgUrl From productimages inner join imagecolorsize
+        on productImages.id=imagecolorsize.imageId WHERE productimages.productId=?`,
+        [req.params.id]
+      );
+      res.json({images: images});
     } catch (error) {
       console.log(error);
       res.json({ state: error });
