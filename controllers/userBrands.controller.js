@@ -24,6 +24,7 @@ const brandController = {
         searchParentId = category[0].parentId;
       }
       const [brands] = await sqlPool.query(`Select * from brands inner join categorybrands on brands.id=categorybrands.brandId where categorybrands.categoryId=?`,[searchId]);
+      
       res.json({ brands: brands });
     } catch (error) {
       console.log(error);

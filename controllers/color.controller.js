@@ -117,7 +117,9 @@ const colorController = {
         id,
       ]);
       await sqlPool.query(`DELETE FROM imagecolorsize WHERE colorId = ?`, [id]);
+      await sqlPool.query(`DELETE FROM descriptioncolorsize WHERE colorId = ?`, [id]);
       await sqlPool.query(`DELETE FROM productcolors WHERE colorId = ?`, [id]);
+      await sqlPool.query(`DELETE FROM modelcolors WHERE colorId = ?`, [id]);
       res.json({ data: result });
     } catch (error) {
       console.log(error);

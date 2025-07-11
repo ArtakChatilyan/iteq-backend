@@ -23,7 +23,7 @@ const userService = {
       "insert into users(email, password,name, phone, activationLink, role) values (?,?,?,?,?,?)",
       [email, hashPassword, name, phone, activationLink, 0]
     );
-    
+
     //await mailService.sendActivationMail(email, activationLink);
     await mailService.sendActivationMail(
       email,
@@ -101,9 +101,9 @@ const userService = {
     if (!token) throw ApiError.UnauhtorizedError();
     const userData = tokenValidation.validateRefreshToken(token);
     const [tokens] = await sqlPool.query("select * from tokens where token=?", [
-      token
+      token,
     ]);
-    
+
     if (userData && tokens.length > 0) {
       const newTokens = tokenService.genearteTokens({
         id: userData.id,

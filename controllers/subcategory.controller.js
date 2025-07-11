@@ -3,13 +3,6 @@ const sqlPool = require("../database");
 const subcategoryController = {
   getSubCategories: async (req, res) => {
     try {
-      // let query;
-      // query = `select categories.id, categories.nameEn, categories.nameGe, categories.nameRu,(select nameEn from categories where id=${
-      //   req.query.parentId
-      // } LIMIT 1) from categories where parentId=${req.query.parentId} LIMIT ${
-      //   req.query.perPage
-      // } OFFSET ${(req.query.page - 1) * req.query.perPage}`;
-
       const [rows] = await sqlPool.query(
         'select categories.id, categories.nameEn, categories.nameGe, categories.nameRu,(select nameEn from categories where id=? LIMIT 1) from categories where parentId=? LIMIT ? OFFSET ?',
         [

@@ -31,33 +31,43 @@ router.put('/:id', productController.updateProduct);
 
 router.delete('/:id', productController.deleteProduct);
 
-router.get('/productsizes/:id', productController.getProductSizes);
+// router.get('/productsizes/:id', productController.getProductSizes);
 
-router.get('/productsize/:id', productController.getProductSize);
+// router.get('/productsize/:id', productController.getProductSize);
 
-router.post('/productsizes', productController.addProductSize);
+// router.post('/productsizes', productController.addProductSize);
 
-router.put('/productsize/:id', productController.updateProductSize);
+// router.put('/productsize/:id', productController.updateProductSize);
 
-router.delete('/productsize/:id', productController.deleteProductSize);
+// router.delete('/productsize/:id', productController.deleteProductSize);
 
 router.get('/productCategories/:id', productController.getProductCategories);
 
 router.post('/productCategories', productController.setProductCategories);
 
-router.get('/productColors/:id', productController.getProductColors);
+// router.get('/productColors/:id', productController.getProductColors);
 
-router.post('/productColors', productController.setProductColors);
+// router.post('/productColors', productController.setProductColors);
 
 router.get('/productImages/:id', productController.getProductImages);
 
 router.post('/productImages',upload.single("imgUrl"), productController.addProductImage);
 
-router.get('/productImageColorSize/:id', productController.getImageColorSize);
+router.get('/descriptions/:productId', productController.getDescriptions);
 
-router.post('/productImageColorSize', productController.setImageColorSize);
+router.get('/description/:descriptionId', productController.getDescription);
 
-router.delete('/productImageColorSize/:id', productController.deleteImageColorSize);
+router.post('/descriptions', productController.addDescription);
+
+router.put('/descriptions/:descriptionId', productController.updateDescription);
+
+router.delete('/descriptions/:descriptionId', productController.deleteDescription);
+
+// router.get('/productImageColorSize/:id', productController.getImageColorSize);
+
+// router.post('/productImageColorSize', productController.setImageColorSize);
+
+// router.delete('/productImageColorSize/:id', productController.deleteImageColorSize);
 
 router.delete('/productImage/:id', productController.deleteProductImage);
 

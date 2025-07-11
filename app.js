@@ -22,6 +22,7 @@ const categoryRouter = require("./routes/categories.router");
 const subCategoryRouter = require("./routes/subcategories.router");
 const brandRouter = require("./routes/brands.router");
 const productRouter = require("./routes/products.router");
+const modelRouter=require("./routes/models.router");
 const colorRouter = require("./routes/color.router");
 const sliderRouter = require("./routes/slider.router");
 const partnerRouter = require("./routes/partners.router");
@@ -40,8 +41,8 @@ const userSearchRouter = require("./routes/userSearch.router.js");
 
 const userRouter = require("./routes/users.router.js");
 
-app.use("/products", express.static("products"));
 app.use("/categories", express.static("categories"));
+app.use("/products", express.static("products"));
 app.use("/slides", express.static("slides"));
 app.use("/portfolio", express.static("portfolio"));
 app.use("/partners", express.static("partners"));
@@ -55,6 +56,7 @@ app.use("/api/v1/categories", categoryRouter);
 app.use("/api/v1/subcategories", subCategoryRouter);
 app.use("/api/v1/brands", brandRouter);
 app.use("/api/v1/products", productRouter);
+app.use("/api/v1/models", modelRouter);
 app.use("/api/v1/colors", colorRouter);
 app.use("/api/v1/slides", sliderRouter);
 app.use("/api/v1/partners", partnerRouter);
@@ -84,7 +86,7 @@ const start = () => {
       console.log("Server is running on port 8080");
     });
   } catch (error) {
-    console.log(error);
+    //console.log(error);
   }
 };
 
