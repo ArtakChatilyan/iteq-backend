@@ -83,7 +83,8 @@ const modelsController = {
   getModelColors: async (req, res) => {
     try {
       const [rows] = await sqlPool.query(
-        `Select modelcolors.id as modelId, modelcolors.modelId, modelcolors.colorId, colors.id as colorId, colors.nameRu From modelcolors inner join colors on modelcolors.colorId=colors.id WHERE modelId=?`,
+        `Select modelcolors.id as modelId, modelcolors.modelId, modelcolors.colorId, colors.id as colorId, colors.nameRu 
+        From modelcolors inner join colors on modelcolors.colorId=colors.id WHERE modelId=?`,
         [req.params.id]
       );
       res.json({ mColors: rows });

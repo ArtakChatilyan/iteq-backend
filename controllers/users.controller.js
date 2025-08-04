@@ -10,12 +10,26 @@ const userCntroller = {
         next(ApiError.BadRequest("Invalid email or password", errors.array()));
       }
       const { email, password, name, phone } = req.body;
-      const userData = await userService.registration(email, password, name, phone);
+      const userData = await userService.registration(
+        email,
+        password,
+        name,
+        phone
+      );
       res.cookie("refreshTokenIteq", userData.refreshToken, {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         httpOnly: true,
       });
       res.json(userData);
+    } catch (e) {
+      next(e);
+    }
+  },
+  resend: async (req, res, next) => {
+    try {
+      const { refreshTokenIteq } = req.cookies;
+      await userService.resendActivationLink(refreshTokenIteq);
+      res.json({ status: "done!" });
     } catch (e) {
       next(e);
     }
@@ -46,8 +60,22 @@ const userCntroller = {
   activate: async (req, res, next) => {
     try {
       const link = req.params.link;
-      userService.activate(link);
+      await userService.activate(link);
       return res.redirect(`${process.env.CLIENT_URL}/login`);
+    } catch (e) {
+      next(e);
+    }
+  },
+  changePassword: async (req, res, next) => {
+    try {
+      const { oldPassword, newPassword } = req.body;
+      const userData = res.user;
+      const result = await userService.changePassword(
+        userData,
+        oldPassword,
+        newPassword
+      );
+      res.json(result);
     } catch (e) {
       next(e);
     }
@@ -69,7 +97,10 @@ const userCntroller = {
   getUsers: async (req, res, next) => {
     try {
       const { page, perPage } = req.query;
-      const users=await userService.getUsers(parseInt(page), parseInt(perPage));
+      const users = await userService.getUsers(
+        parseInt(page),
+        parseInt(perPage)
+      );
       res.json(users);
     } catch (e) {
       next(e);
@@ -77,10 +108,10 @@ const userCntroller = {
   },
   email: async (req, res, next) => {
     try {
-      const {Firstname, Lastname, Email, Phone, Message}=req.body;
+      const { Firstname, Lastname, Email, Phone, Message } = req.body;
       await userService.sendEmail(Firstname, Lastname, Email, Phone, Message);
-      
-      res.json({state: "Message sent successfully"});
+
+      res.json({ state: "Message sent successfully" });
     } catch (e) {
       next(e);
     }

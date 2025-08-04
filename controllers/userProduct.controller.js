@@ -1,6 +1,10 @@
 const sqlPool = require("../database");
 
 const compareModels = (model1, model2) => {
+  if(!model1.viewInfo)
+    return true;
+  if(!model2.viewInfo)
+    return false;
   const minPrice1 = model1.viewInfo.discount
     ? model1.viewInfo.newPrice
     : model1.viewInfo.price;
@@ -35,6 +39,7 @@ const productController = {
       }
 
       for (let i = 0; i < products.length; i++) {
+       
         products[i].prices = [];
         const [models] = await sqlPool.query(
           "select * from models where productId=?",
@@ -44,16 +49,19 @@ const productController = {
           for (let j = 0; j < models.length; j++) {
             const [sizes] = await sqlPool.query(
               "select * from modelsizes where modelId=?",
-              [models[i].id]
+              [models[j].id]
             );
 
             if (sizes.length > 0) {
-              const minDiscountSize = sizes
+              let sortedDiscounts=sizes
                 .filter((s) => s.discount === 1)
-                .sort((a, b) => a["newPrice"] - b["newPrice"])[0];
-              const minSize = sizes
+                .sort((a, b) => a["newPrice"] - b["newPrice"]);
+              const minDiscountSize =sortedDiscounts.length>0 ? sortedDiscounts[0] : 0;
+              let sorted=sizes
                 .filter((s) => s.discount === 0)
-                .sort((a, b) => a["price"] - b["price"])[0];
+                .sort((a, b) => a["price"] - b["price"]);
+              const minSize = sorted.length>0 ? sorted[0] : 0;
+
               if (!minDiscountSize) {
                 models[j].viewInfo = minSize;
               } else if (!minSize) {
@@ -69,10 +77,11 @@ const productController = {
                   sizes[k].discount === 1 ? sizes[k].newPrice : sizes[k].price
                 );
               }
+
+
             }
           }
-
-          products[i].viewInfo = models.sort(compareModels)[0];
+       products[i].viewInfo = models.sort(compareModels)[0];
         }
 
         if (products[i].prices.length > 0) {
@@ -95,112 +104,6 @@ const productController = {
           }
         }
       }
-
-      // for (let i = 0; i < products.length; i++) {
-      //   if (products[i].productMultyDimension === 1) {
-      //     const [sizes] = await sqlPool.query(
-      //       "select * from productsizes where productId=?",
-      //       [products[i].id]
-      //     );
-      //     if (sizes.length > 0) {
-      //       const minDiscountSize = sizes
-      //         .filter((s) => s.discount === 1)
-      //         .sort((a, b) => a["newPrice"] - b["newPrice"])[0];
-      //       const minSize = sizes
-      //         .filter((s) => s.discount === 0)
-      //         .sort((a, b) => a["price"] - b["price"])[0];
-      //       if (!minDiscountSize) {
-      //         products[i].viewInfo = minSize;
-      //       } else if (!minSize) {
-      //         products[i].viewInfo = minDiscountSize;
-      //       } else {
-      //         products[i].viewInfo =
-      //           minDiscountSize.newPrice > minSize.price
-      //             ? minSize
-      //             : minDiscountSize;
-      //       }
-      //     }
-      //   } else {
-      //     products[i].viewInfo = {
-      //       count: products[i].productCount,
-      //       dimension: products[i].productDimension,
-      //       weight: products[i].productWeight,
-      //       discount: products[i].productDiscount,
-      //       inStock: products[i].productInStock,
-      //       price: products[i].productPrice,
-      //       newPrice: products[i].productNewPrice,
-      //     };
-      //   }
-      // }
-
-      // if (minPrice > -1) {
-      //   for (let i = 0; i < products.length; i++) {
-      //     let currentPrices = [];
-      //     if (products[i].productMultyDimension === 1) {
-      //       const [sizes] = await sqlPool.query(
-      //         "select * from productsizes where productId=?",
-      //         [products[i].id]
-      //       );
-      //       sizes.forEach((s) => {
-      //         if (s.discount === 1) {
-      //           currentPrices.push(s.newPrice);
-      //           if (newMinPrice > s.newPrice) newMinPrice = s.newPrice;
-      //           if (newMaxPrice < s.newPrice) newMaxPrice = s.newPrice;
-      //         } else {
-      //           currentPrices.push(s.price);
-      //           if (newMinPrice > s.price) newMinPrice = s.price;
-      //           if (newMaxPrice < s.price) newMaxPrice = s.price;
-      //         }
-      //       });
-      //     } else {
-      //       if (products[i].productDiscount === 1) {
-      //         currentPrices.push(products[i].productNewPrice);
-      //         if (newMinPrice > products[i].productNewPrice)
-      //           newMinPrice = products[i].productNewPrice;
-      //         if (newMaxPrice < products[i].productNewPrice)
-      //           newMaxPrice = products[i].productNewPrice;
-      //       } else {
-      //         currentPrices.push(products[i].productPrice);
-      //         if (newMinPrice > products[i].productPrice)
-      //           newMinPrice = products[i].productPrice;
-      //         if (newMaxPrice < products[i].productPrice)
-      //           newMaxPrice = products[i].productPrice;
-      //       }
-      //     }
-      //     if (currentPrices.some((p) => p >= minPrice && p <= maxPrice))
-      //       priceFilteredProducts.push(products[i]);
-      //   }
-      // } else {
-      //   for (let i = 0; i < products.length; i++) {
-      //     if (products[i].productMultyDimension === 1) {
-      //       const [sizes] = await sqlPool.query(
-      //         "select * from productsizes where productId=?",
-      //         [products[i].id]
-      //       );
-      //       sizes.forEach((s) => {
-      //         if (s.discount === 1) {
-      //           if (newMinPrice > s.newPrice) newMinPrice = s.newPrice;
-      //           if (newMaxPrice < s.newPrice) newMaxPrice = s.newPrice;
-      //         } else {
-      //           if (newMinPrice > s.price) newMinPrice = s.price;
-      //           if (newMaxPrice < s.price) newMaxPrice = s.price;
-      //         }
-      //       });
-      //     } else {
-      //       if (products[i].productDiscount === 1) {
-      //         if (newMinPrice > products[i].productNewPrice)
-      //           newMinPrice = products[i].productNewPrice;
-      //         if (newMaxPrice < products[i].productNewPrice)
-      //           newMaxPrice = products[i].productNewPrice;
-      //       } else {
-      //         if (newMinPrice > products[i].productPrice)
-      //           newMinPrice = products[i].productPrice;
-      //         if (newMaxPrice < products[i].productPrice)
-      //           newMaxPrice = products[i].productPrice;
-      //       }
-      //     }
-      //   }
-      // }
 
       const total =
         minPrice > -1 ? priceFilteredProducts.length : products.length;

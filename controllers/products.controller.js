@@ -11,6 +11,10 @@ const productController = {
         `Select id, productNameEn, productNameGe, productNameRu, (select imgUrl from productimages where products.id=productimages.productId LIMIT 0,1) as imgUrl From products LIMIT ? OFFSET ?`,
         [perPage, (page - 1) * perPage]
       );
+      for(let i=0; i<rows.length; i++){
+        const [modelInfo]=await sqlPool.query("select id, nameEn from models where productId=?", [rows[i].id]);
+        rows[i].modelInfo=modelInfo;
+      }
       const [rowsCount] = await sqlPool.query(
         `Select count(*) as total From products`
       );

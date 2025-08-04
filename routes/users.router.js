@@ -10,8 +10,10 @@ router.post(
   body("password").isLength({ min: 3, max: 16 }),
   userCntroller.registration
 );
+router.get("/resend", userCntroller.resend);
 router.post("/login", userCntroller.login);
 router.post("/logout", userCntroller.logout);
+router.post("/changePassword", authMiddleWare,  userCntroller.changePassword);
 
 router.get("/activate/:link", userCntroller.activate);
 router.get("/forgotPassword/:link", userCntroller.forgotPassword);

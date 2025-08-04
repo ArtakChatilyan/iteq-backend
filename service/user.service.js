@@ -49,6 +49,22 @@ const userService = {
       },
     };
   },
+  resendActivationLink: async (token) => {
+    const userData = tokenValidation.validateRefreshToken(token);
+    const [tokens] = await sqlPool.query("select * from tokens where token=?", [
+      token,
+    ]);
+    if (userData && tokens.length > 0) {
+      const [links] = await sqlPool.query(
+        "select activationLink from users where userId=?",
+        [userData.id]
+      );
+      await mailService.sendActivationMail(
+        userData.email,
+        `${process.env.API_URL}/api/v1/users/activate/${links[0].activationLink}`
+      );
+    }
+  },
   activate: async (link) => {
     const [users] = await sqlPool.query(
       "select * from users where activationLink=?",
@@ -94,6 +110,26 @@ const userService = {
       throw ApiError.BadRequest("Wrong password!");
     }
   },
+  changePassword: async (userData, oldPassword, newPassword) => {
+    const [userPassword] = await sqlPool.query(
+      "select * from users where userId=?",
+      userData.id
+    );
+    const isPassEqual = await bcrypt.compare(
+      oldPassword,
+      userPassword[0].password
+    );
+    if (isPassEqual) {
+      const hashPassword = await bcrypt.hash(newPassword, 10);
+      await sqlPool.query("update users set password=? where userId=?", [
+        hashPassword,
+        userData.id,
+      ]);
+      return { result: "password changed" };
+    } else {
+      throw ApiError.BadRequest("Wrong password!");
+    }
+  },
   logout: async (token) => {
     await sqlPool.query("delete from tokens where token=?", [token]);
   },
@@ -118,7 +154,7 @@ const userService = {
       return {
         ...newTokens,
         user: {
-          id: users[0].userId,
+          userId: users[0].userId,
           name: users[0].name,
           phone: users[0].phone,
           email: users[0].email,
