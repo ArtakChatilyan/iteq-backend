@@ -261,7 +261,7 @@ const productController = {
         await sqlPool.query("Delete from imagecolorsize where modelId=?", [models[i].id]);
         await sqlPool.query("Delete from modelcolors where modelId=?", [models[i].id]);
         await sqlPool.query("Delete from modelsizes where modelId=?", [models[i].id]);
-        await sqlPool.query("Delete from modles where id=?", [models[i].id]);
+        await sqlPool.query("Delete from models where id=?", [models[i].id]);
       }
       await sqlPool.query(`DELETE FROM productimages WHERE productId =?`, [id]);
       await sqlPool.query(`DELETE FROM productcategories WHERE productId =?`, [

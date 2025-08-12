@@ -32,6 +32,19 @@ const categoryController = {
     }
   },
 
+  getCategoriesMain: async (req, res) => {
+    try {
+      const [rows] = await sqlPool.query(
+        `Select * From categories where parentId=0`
+      );
+
+      res.json({ data: rows });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
   getCategory: async (req, res) => {
     try {
       const [rows] = await sqlPool.query(
@@ -47,7 +60,7 @@ const categoryController = {
 
   addCategory: async (req, res) => {
     try {
-      const { nameEn, nameGe, nameRu, onTop } = req.body;
+      const { nameEn, nameGe, nameRu, categoryOrder, onTop } = req.body;
       const imgUrl =
         req.protocol +
         "://" +
@@ -55,8 +68,8 @@ const categoryController = {
         "/categories/" +
         req.file.filename;
       const [result] = await sqlPool.query(
-        `INSERT INTO categories(nameEn, nameGe, nameRu, imgUrl, onTop, parentId) VALUES (?,?,?,?,?,?)`,
-        [nameEn, nameGe, nameRu, imgUrl, onTop === "true", 0]
+        `INSERT INTO categories(nameEn, nameGe, nameRu, categoryOrder, imgUrl, onTop, parentId) VALUES (?,?,?,?,?,?,?)`,
+        [nameEn, nameGe, nameRu, categoryOrder, imgUrl, onTop === "true", 0]
       );
       res.json({ id: result.insertId });
     } catch (error) {
@@ -74,8 +87,8 @@ const categoryController = {
           req.file.filename
         : "";
 
-      const { nameEn, nameGe, nameRu, onTop } = req.body;
-      console.log("onTop:" + onTop);
+      const { nameEn, nameGe, nameRu, categoryOrder, onTop } = req.body;
+      console.log("categoryOrder:" + categoryOrder);
 
       const { id } = req.params;
       if (imgUrl) {
@@ -97,13 +110,13 @@ const categoryController = {
         }
 
         const [result] = await sqlPool.query(
-          `UPDATE categories SET nameEn=?, nameGe=?, nameRu=?, imgUrl=?, onTop=? WHERE id=?`,
-          [nameEn, nameGe, nameRu, imgUrl, onTop === "true", id]
+          `UPDATE categories SET nameEn=?, nameGe=?, nameRu=?, categoryOrder=?, imgUrl=?, onTop=? WHERE id=?`,
+          [nameEn, nameGe, nameRu, categoryOrder, imgUrl, onTop === "true", id]
         );
       } else {
         const [result] = await sqlPool.query(
-          `UPDATE categories SET nameEn=?, nameGe=?, nameRu=?, onTop=? WHERE id=?`,
-          [nameEn, nameGe, nameRu, onTop === "true", id]
+          `UPDATE categories SET nameEn=?, nameGe=?, nameRu=?,categoryOrder=?, onTop=? WHERE id=?`,
+          [nameEn, nameGe, nameRu, categoryOrder, onTop === "true", id]
         );
       }
       const rows = await sqlPool.query(`Select * From categories WHERE id=?`, [
@@ -163,7 +176,7 @@ const categoryController = {
   getCategoryBrands: async (req, res) => {
     try {
       const [rows] = await sqlPool.query(
-        `Select * From categorybrands WHERE categoryId=?`,
+        `Select categorybrands.id, categoryId, brandId, brandName From categorybrands inner join brands on categorybrands.brandId=brands.id WHERE categoryId=?`,
         [req.params.id]
       );
       res.json({ data: rows });

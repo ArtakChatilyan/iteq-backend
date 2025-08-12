@@ -30,6 +30,8 @@ router.get("/", categoryController.getCategories);
 
 router.get("/all", categoryController.getCategoriesForProduct);
 
+router.get("/main", categoryController.getCategoriesMain);
+
 router.get("/:id", categoryController.getCategory);
 
 router.post("/", upload.single("imgUrl"), categoryController.addCategory);

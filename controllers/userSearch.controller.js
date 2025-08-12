@@ -49,7 +49,7 @@ const seaechController = {
             [products[i].id]
           );
           if (models.length > 0) {
-            products[i].modelInfo=models;
+            products[i].modelInfo = models;
             for (let j = 0; j < models.length; j++) {
               const [sizes] = await sqlPool.query(
                 "select * from modelsizes where modelId=?",
@@ -132,7 +132,7 @@ const seaechController = {
           [products[i].id, term]
         );
         if (models.length > 0) {
-          products[i].modelInfo=models;
+          products[i].modelInfo = models;
           for (let j = 0; j < models.length; j++) {
             const [sizes] = await sqlPool.query(
               "select * from modelsizes where modelId=?",
@@ -211,52 +211,51 @@ const seaechController = {
         From products inner join productcategories on products.id=productcategories.productId where productcategories.categoryId=? LIMIT ? OFFSET ?`,
           [catId[0].id, parseInt(perPage), (page - 1) * perPage]
         );
-        
-        
+
         for (let i = 0; i < products.length; i++) {
-        products[i].prices = [];
-        const [models] = await sqlPool.query(
-          "select * from models where productId=?",
-          [products[i].id]
-        );
-        if (models.length > 0) {
-          for (let j = 0; j < models.length; j++) {
-            const [sizes] = await sqlPool.query(
-              "select * from modelsizes where modelId=?",
-              [models[j].id]
-            );
+          products[i].prices = [];
+          const [models] = await sqlPool.query(
+            "select * from models where productId=?",
+            [products[i].id]
+          );
+          if (models.length > 0) {
+            for (let j = 0; j < models.length; j++) {
+              const [sizes] = await sqlPool.query(
+                "select * from modelsizes where modelId=?",
+                [models[j].id]
+              );
 
-            if (sizes.length > 0) {
-              let sortedDiscounts = sizes
-                .filter((s) => s.discount === 1)
-                .sort((a, b) => a["newPrice"] - b["newPrice"]);
-              const minDiscountSize =
-                sortedDiscounts.length > 0 ? sortedDiscounts[0] : 0;
-              let sorted = sizes
-                .filter((s) => s.discount === 0)
-                .sort((a, b) => a["price"] - b["price"]);
-              const minSize = sorted.length > 0 ? sorted[0] : 0;
+              if (sizes.length > 0) {
+                let sortedDiscounts = sizes
+                  .filter((s) => s.discount === 1)
+                  .sort((a, b) => a["newPrice"] - b["newPrice"]);
+                const minDiscountSize =
+                  sortedDiscounts.length > 0 ? sortedDiscounts[0] : 0;
+                let sorted = sizes
+                  .filter((s) => s.discount === 0)
+                  .sort((a, b) => a["price"] - b["price"]);
+                const minSize = sorted.length > 0 ? sorted[0] : 0;
 
-              if (!minDiscountSize) {
-                models[j].viewInfo = minSize;
-              } else if (!minSize) {
-                models[j].viewInfo = minDiscountSize;
-              } else {
-                models[j].viewInfo =
-                  minDiscountSize.newPrice > minSize.price
-                    ? minSize
-                    : minDiscountSize;
-              }
-              for (let k = 0; k < sizes.length; k++) {
-                products[i].prices.push(
-                  sizes[k].discount === 1 ? sizes[k].newPrice : sizes[k].price
-                );
+                if (!minDiscountSize) {
+                  models[j].viewInfo = minSize;
+                } else if (!minSize) {
+                  models[j].viewInfo = minDiscountSize;
+                } else {
+                  models[j].viewInfo =
+                    minDiscountSize.newPrice > minSize.price
+                      ? minSize
+                      : minDiscountSize;
+                }
+                for (let k = 0; k < sizes.length; k++) {
+                  products[i].prices.push(
+                    sizes[k].discount === 1 ? sizes[k].newPrice : sizes[k].price
+                  );
+                }
               }
             }
+            products[i].viewInfo = models.sort(compareModels)[0];
           }
-          products[i].viewInfo = models.sort(compareModels)[0];
         }
-      }
         [countResult] = await sqlPool.query(
           `Select count(*) as total  from products inner join productcategories on products.id=productcategories.productId where productcategories.categoryId=?`,
           [catId[0].id]
@@ -270,6 +269,41 @@ const seaechController = {
       res.json({ state: error });
     }
   },
+  getGeneral: async (req, res) => {
+    try {
+      const { term } = req.query;
+      const [searchBrands] = await sqlPool.query(
+        "select id, brandName as name from brands where brandName like ? LIMIT 3",
+        ["%" + term + "%"]
+      );
+      searchBrands.forEach(b=>b.type="b");
+      const [searchModels] = await sqlPool.query(
+        "select id, nameEn as name from models where nameEn like ? or nameGe like ? or nameRu like ? LIMIT 3",
+        ["%" + term + "%", "%" + term + "%", "%" + term + "%"]
+      );
+      searchModels.forEach(m=>m.type="m");
+      const [searchCategoriesEn] = await sqlPool.query(
+        "select id, nameEn as name from categories where nameEn like ? LIMIT 3",
+        ["%" + term + "%"]
+      );
+      searchCategoriesEn.forEach(c=>c.type="c");
+      const [searchCategoriesGe] = await sqlPool.query(
+        "select id, nameGe as name from categories where nameGe like ? LIMIT 3",
+        ["%" + term + "%"]
+      );
+      searchCategoriesGe.forEach(c=>c.type="c");
+      const [searchCategoriesRu] = await sqlPool.query(
+        "select id, nameRu name from categories where nameRu like ? LIMIT 3",
+        ["%" + term + "%"]
+      );
+      searchCategoriesRu.forEach(c=>c.type="c");
+      res.json({searchData:[...searchBrands, ...searchModels, ...searchCategoriesEn, ...searchCategoriesGe, ...searchCategoriesRu]});
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+  getGeneralProducts: async (req, res) => {},
 };
 
 module.exports = seaechController;

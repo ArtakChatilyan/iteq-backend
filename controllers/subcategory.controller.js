@@ -4,7 +4,7 @@ const subcategoryController = {
   getSubCategories: async (req, res) => {
     try {
       const [rows] = await sqlPool.query(
-        'select categories.id, categories.nameEn, categories.nameGe, categories.nameRu,(select nameEn from categories where id=? LIMIT 1) from categories where parentId=? LIMIT ? OFFSET ?',
+        'select categories.id, categories.nameEn, categories.nameGe, categories.nameRu, categories.categoryOrder,(select nameEn from categories where id=? LIMIT 1) from categories where parentId=? LIMIT ? OFFSET ?',
         [
           req.query.parentId,
           req.query.parentId,
@@ -39,10 +39,10 @@ const subcategoryController = {
 
   addSubCategory: async (req, res) => {
     try {
-      const { nameEn, nameGe, nameRu, onTop, parent } = req.body.data;
+      const { nameEn, nameGe, nameRu,categoryOrder, onTop, parent } = req.body.data;
       const [result] = await sqlPool.query(
-        `INSERT INTO categories(nameEn, nameGe, nameRu, parentId, onTop) VALUES (?,?,?,?,?)`,
-        [nameEn, nameGe, nameRu, req.body.parentId, onTop]
+        `INSERT INTO categories(nameEn, nameGe, nameRu,categoryOrder, parentId, onTop) VALUES (?,?,?,?,?,?)`,
+        [nameEn, nameGe, nameRu,categoryOrder, req.body.parentId, onTop]
       );
       res.json({ id: result.insertId });
     } catch (error) {
@@ -53,11 +53,11 @@ const subcategoryController = {
 
   updateSubCategory: async (req, res) => {
     try {
-      const { nameEn, nameGe, nameRu, onTop } = req.body;
+      const { nameEn, nameGe, nameRu,categoryOrder, onTop } = req.body;
       const { id } = req.params;
       const [result] = await sqlPool.query(
-        `UPDATE categories SET nameEn=?, nameGe=?, nameRu=?, onTop=? WHERE id=?`,
-        [nameEn, nameGe, nameRu, onTop, id]
+        `UPDATE categories SET nameEn=?, nameGe=?, nameRu=?,categoryOrder=?, onTop=? WHERE id=?`,
+        [nameEn, nameGe, nameRu,categoryOrder, onTop, id]
       );
 
       const rows = await sqlPool.query(`Select * From categories WHERE id=?`, [

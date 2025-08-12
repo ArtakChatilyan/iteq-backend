@@ -5,7 +5,7 @@ const sqlPool = require("../database");
 const brandsController = {
   getBrandsAll: async (req, res) => {
     try {
-      const [rows] = await sqlPool.query(`Select * From brands`);
+      const [rows] = await sqlPool.query(`Select * From brands order by brandName`);
 
       res.json({ data: rows });
     } catch (error) {
@@ -19,7 +19,7 @@ const brandsController = {
       const page=parseInt(req.query.page);
       const perPage=parseInt(req.query.perPage);
       const [rows] = await sqlPool.query(
-        "Select * From brands LIMIT ? OFFSET ?",
+        "Select * From brands ORDER BY brandName LIMIT ? OFFSET ?",
         [perPage, (page - 1) * perPage]
       );
       const [rowsCount] = await sqlPool.query(
