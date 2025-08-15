@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const orderController=require('../controllers/order.controller');
 
-//router.get('/', basketController.getUserBasket);
+router.get('/', orderController.getUserOrders);
 
 //router.get('/:id', basketController.getBasket);
 

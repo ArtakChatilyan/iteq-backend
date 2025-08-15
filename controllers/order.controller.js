@@ -1,80 +1,79 @@
 const sqlPool = require("../database");
 
 const orderController = {
-  //   getUserBasket: async (req, res) => {
-  //     try {
-  //       const page = parseInt(req.query.page);
-  //       const perPage = parseInt(req.query.perPage);
-  //       const userId = parseInt(req.query.userId);
-  //       let basketImage = null;
-
-  //       const [basketList] = await sqlPool.query(
-  //         "select * from basket where userId=? LIMIT ? OFFSET ?",
-  //         [userId, perPage, (page - 1) * perPage]
-  //       );
-  //       const [listCount] = await sqlPool.query(
-  //         "Select count(*) as total From basket where userId=?",
-  //         [userId]
-  //       );
-  //       for (let i = 0; i < basketList.length; i++) {
-  //         const [productInfo] = await sqlPool.query(
-  //           `select products.id as productId, products.productNameEn,products.productNameGe, products.productNameRu,
-  //             brands.id as brandId, brands.brandName from products inner join brands on products.productBrand=brands.id where products.id=?`,
-  //           [basketList[i].productId]
-  //         );
-  //         basketList[i].productInfo = productInfo;
-  //         const [basketImages] = await sqlPool.query(
-  //           `select productimages.id, productId, imgUrl from productimages inner join imagecolorsize on
-  //           productimages.id=imagecolorsize.imageId where modelId=? and sizeId=? and colorId=?`,
-  //           [basketList[i].modelId, basketList[i].sizeId, basketList[i].colorId]
-  //         );
-  //         const [modelInfo] = await sqlPool.query(
-  //           `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu,
-  //           modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,
-  //           colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu
-  //           from models inner join modelsizes on models.id=modelsizes.modelId
-  //           inner join modelcolors on models.id=modelcolors.modelId
-  //           inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-  //           [basketList[i].productId, basketList[i].modelId]
-  //         );
-  //         if (basketList[i].colorId > 0 && basketList[i].sizeId > 0) {
-  //           basketList[i].modelInfo = modelInfo.find(
-  //             (m) =>
-  //               m.colorId === basketList[i].colorId &&
-  //               m.sizeId === basketList[i].sizeId
-  //           );
-  //         } else if (basketList[i].sizeId > 0) {
-  //           basketList[i].modelInfo = modelInfo.find(
-  //             (m) => m.sizeId === basketList[i].sizeId
-  //           );
-  //         } else if (basketList[i].colorId > 0) {
-  //           basketList[i].modelInfo = modelInfo.find(
-  //             (m) => m.colorId === basketList[i].colorId
-  //           );
-  //         } else {
-  //           basketList[i].modelInfo = modelInfo.find(
-  //             (m) => m.modelId === basketList[i].modelId
-  //           );
-  //         }
-  //         //basketList[i].modelInfo = modelInfo;
-
-  //         if (basketImages.length > 0) {
-  //           basketImage = basketImages[0];
-  //         } else {
-  //           const [images] = await sqlPool.query(
-  //             "select * from productimages where productId=?",
-  //             [basketList[i].productId]
-  //           );
-  //           if (images.length > 0) basketImage = images[0];
-  //         }
-  //         basketList[i].image = basketImage;
-  //       }
-  //       res.json({ basketList: basketList, total: listCount[0].total });
-  //     } catch (error) {
-  //       console.log(error);
-  //       res.json({ state: error });
-  //     }
-  //   },
+    getUserOrders: async (req, res) => {
+      try {
+            const page = parseInt(req.query.page);
+            const perPage = parseInt(req.query.perPage);
+            const userId = parseInt(req.query.userId);
+            let basketImage = null;
+      
+            const [basketList] = await sqlPool.query(
+              "select * from basket where userId=? and itemType=1 LIMIT ? OFFSET ?",
+              [userId, perPage, (page - 1) * perPage]
+            );
+            const [listCount] = await sqlPool.query(
+              "Select count(*) as total From basket where userId=? and itemType=1",
+              [userId]
+            );
+            for (let i = 0; i < basketList.length; i++) {
+              const [productInfo] = await sqlPool.query(
+                `select products.id as productId, products.productNameEn,products.productNameGe, products.productNameRu, 
+                  brands.id as brandId, brands.brandName from products inner join brands on products.productBrand=brands.id where products.id=?`,
+                [basketList[i].productId]
+              );
+              basketList[i].productInfo = productInfo;
+              const [basketImages] = await sqlPool.query(
+                `select productimages.id, productId, imgUrl from productimages inner join imagecolorsize on 
+                productimages.id=imagecolorsize.imageId where modelId=? and sizeId=? and colorId=?`,
+                [basketList[i].modelId, basketList[i].sizeId, basketList[i].colorId]
+              );
+              const [modelInfo] = await sqlPool.query(
+                `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
+                colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
+                from models inner join modelsizes on models.id=modelsizes.modelId 
+                inner join modelcolors on models.id=modelcolors.modelId 
+                inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+                [basketList[i].productId, basketList[i].modelId]
+              );
+              if (basketList[i].colorId > 0 && basketList[i].sizeId > 0) {
+                basketList[i].modelInfo = modelInfo.find(
+                  (m) =>
+                    m.colorId === basketList[i].colorId &&
+                    m.sizeId === basketList[i].sizeId
+                );
+              } else if (basketList[i].sizeId > 0) {
+                basketList[i].modelInfo = modelInfo.find(
+                  (m) => m.sizeId === basketList[i].sizeId
+                );
+              } else if (basketList[i].colorId > 0) {
+                basketList[i].modelInfo = modelInfo.find(
+                  (m) => m.colorId === basketList[i].colorId
+                );
+              } else {
+                basketList[i].modelInfo = modelInfo.find(
+                  (m) => m.modelId === basketList[i].modelId
+                );
+              }
+      
+              if (basketImages.length > 0) {
+                basketImage = basketImages[0];
+              } else {
+                const [images] = await sqlPool.query(
+                  "select * from productimages where productId=?",
+                  [basketList[i].productId]
+                );
+                if (images.length > 0) basketImage = images[0];
+              }
+              basketList[i].image = basketImage;
+            }
+            res.json({ basketList: basketList, total: listCount[0].total });
+          } catch (error) {
+            console.log(error);
+            res.json({ state: error });
+          }
+    },
 
   //   getUserTotal: async (req, res) => {
   //     try {
@@ -123,8 +122,6 @@ const orderController = {
         "insert into orders(price, orderDate) values(?,?)",
         [totalPrice, orderDate]
       );
-      console.log(orderID);
-      
       for (let i = 0; i < orders.length; i++) {
         const { userId, productId, modelId, sizeId, colorId, count, price } =
           orders[i];
