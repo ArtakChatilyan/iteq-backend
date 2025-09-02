@@ -13,7 +13,6 @@ const brandController = {
   getBrandsForCategory: async(req, res)=>{
     try {
       let {catId}=req.query;
-      
       let searchId = catId;
       let [category]=await sqlPool.query('select * from categories where id=?', [catId]);
       let searchParentId = category[0].parentId;

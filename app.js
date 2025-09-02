@@ -49,6 +49,7 @@ const partnerRouter = require("./routes/partners.router");
 const portfolioRouter = require("./routes/portfolio.router");
 const newsRouter = require("./routes/news.router");
 const settingsRouter = require("./routes/settings.router");
+const ordersRouter=require("./routes/orders.router.js");
 
 const userCategoryRouter = require("./routes/userCategories.router");
 const userProductRouter = require("./routes/userProducts.router");
@@ -60,8 +61,9 @@ const userStoriesRouter = require("./routes/userStories.router.js");
 const userSearchRouter = require("./routes/userSearch.router.js");
 
 const userRouter = require("./routes/users.router.js");
-const basketRouter=require("./routes/basket.router.js");
-const ordersRouter=require("./routes/order.router.js");
+const userBasketRouter=require("./routes/userBasket.router.js");
+const userOrdersRouter=require("./routes/userOrder.router.js");
+const userHistoryRouter=require("./routes/userHistory.router.js");
 //const chatService = require("./service/chat.service.js");
 
 app.use("/categories", express.static("categories"));
@@ -74,8 +76,6 @@ app.use("/brands", express.static("brands"));
 app.use("/colors", express.static("colors"));
 
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/basket", basketRouter);
-app.use("/api/v1/orders", ordersRouter);
 
 app.use("/api/v1/categories", categoryRouter);
 app.use("/api/v1/subcategories", subCategoryRouter);
@@ -88,6 +88,7 @@ app.use("/api/v1/partners", partnerRouter);
 app.use("/api/v1/portfolio", portfolioRouter);
 app.use("/api/v1/news", newsRouter);
 app.use("/api/v1/settings", settingsRouter);
+app.use("/api/v1/orders", ordersRouter);
 
 app.use("/api/v1/user/categories", userCategoryRouter);
 app.use("/api/v1/user/products", userProductRouter);
@@ -97,8 +98,9 @@ app.use("/api/v1/user/discounts", userDiscountRouter);
 app.use("/api/v1/user/brands", userBrandsRouter);
 app.use("/api/v1/user/stories", userStoriesRouter);
 app.use("/api/v1/user/search", userSearchRouter);
-
-
+app.use("/api/v1/user/basket", userBasketRouter);
+app.use("/api/v1/user/orders", userOrdersRouter);
+app.use("/api/v1/user/history", userHistoryRouter);
 
 // app.use((err, req, res, next) => {
 //   console.error(err.stack);

@@ -4,7 +4,7 @@ const discountController = {
   getDiscountsAll: async (req, res) => {
     try {
       const [discountProducts] = await sqlPool.query(
-        `Select products.id, productNameEn, productNameGe, productNameRu, productModel, productPrice, productInStock, productDiscount, productNewPrice, (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
+        `Select products.id, productNameEn, productNameGe, productNameRu, productModel, productPrice, productInStock, productDiscount, productNewPrice, productOnTop, (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
         From products WHERE products.productOnTop=1`
       );
       res.json({ products: discountProducts });

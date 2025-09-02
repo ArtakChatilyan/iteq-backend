@@ -168,10 +168,10 @@ const userService = {
   },
   getUsers: async (page, perPage) => {
     const [users] = await sqlPool.query(
-      "select * from users LIMIT ? OFFSET ?",
+      "select * from users where role=0 LIMIT ? OFFSET ?",
       [perPage, (page - 1) * perPage]
     );
-    const [count] = await sqlPool.query("select count(*) as total from users");
+    const [count] = await sqlPool.query("select count(*) as total from users where role=0");
     return { users: users, total: count[0].total };
   },
   sendEmail: async (Firstname, Lastname, Email, Phone, Message) => {

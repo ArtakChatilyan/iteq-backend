@@ -9,11 +9,11 @@ const basketController = {
       let basketImage = null;
 
       const [basketList] = await sqlPool.query(
-        "select * from basket where userId=? and itemType=0 LIMIT ? OFFSET ?",
+        "select * from basket where userId=? LIMIT ? OFFSET ?",
         [userId, perPage, (page - 1) * perPage]
       );
       const [listCount] = await sqlPool.query(
-        "Select count(*) as total From basket where userId=? and itemType=0",
+        "Select count(*) as total From basket where userId=?",
         [userId]
       );
       for (let i = 0; i < basketList.length; i++) {
@@ -56,7 +56,6 @@ const basketController = {
             (m) => m.modelId === basketList[i].modelId
           );
         }
-        //basketList[i].modelInfo = modelInfo;
 
         if (basketImages.length > 0) {
           basketImage = basketImages[0];
@@ -80,7 +79,7 @@ const basketController = {
     try {
       const userId = req.params.userId;
       const [rowsCount] = await sqlPool.query(
-        "Select count(*) as total From basket where userId=? and itemType=0",
+        "Select count(*) as total From basket where userId=?",
         [userId]
       );
       res.json({ total: rowsCount[0].total });

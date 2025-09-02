@@ -30,6 +30,8 @@ const productController = {
       const [rows] = await sqlPool.query(`Select * From products WHERE id=?`, [
         req.params.id,
       ]);
+      console.log(rows);
+      
       res.json({ data: rows[0] });
     } catch (error) {
       console.log(error);
