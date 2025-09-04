@@ -1,10 +1,8 @@
 const sqlPool = require("../database");
 
 const compareModels = (model1, model2) => {
-  if(!model1.viewInfo)
-    return true;
-  if(!model2.viewInfo)
-    return false;
+  if (!model1.viewInfo) return true;
+  if (!model2.viewInfo) return false;
   const minPrice1 = model1.viewInfo.discount
     ? model1.viewInfo.newPrice
     : model1.viewInfo.price;
@@ -17,29 +15,64 @@ const productController = {
   getProducts: async (req, res) => {
     try {
       const { catId, brands, minPrice, maxPrice, page, perPage } = req.query;
+
       let newMinPrice = 0;
       let newMaxPrice = 0;
-      let brandIds = [];
-      let priceFilteredProducts = [];
 
+      let brandCondition = "";
       if (brands.length > 0) {
-        brandIds = brands.split(",");
+        brandCondition = " and products.productBrand in (" + brands + ") ";
       }
-      brandIds = brandIds.map((b) => parseInt(b));
 
-      let [products] = await sqlPool.query(
-        `Select products.id, productNameEn, productNameGe, productNameRu,productBrand, productInStock, 
-        (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
-        From products inner join productcategories ON products.id=productcategories.productId and productcategories.categoryId=?`,
+      let priceCondition = "";
+      if (minPrice > -1) {
+        priceCondition = `and ((modelsizes.price>${minPrice} and modelsizes.price<${maxPrice}) or(modelsizes.newPrice>${minPrice} and modelsizes.newPrice<${maxPrice} and modelsizes.newPrice>0))`;
+      }
+
+      let [MinMaxPrices] = await sqlPool.query(
+        `Select MIN(modelsizes.price) as minPrice, MIN(modelsizes.newPrice) as minNewPrice,
+        MAX(modelsizes.price) as maxPrice
+        From products inner join productcategories ON products.id=productcategories.productId 
+        inner join models on products.id=models.productId 
+        inner join modelsizes on modelsizes.modelId=models.id
+        where productcategories.categoryId=? ${brandCondition} and modelsizes.price>0`,
         [catId]
       );
 
-      if (brandIds.length > 0) {
-        products = products.filter((p) => brandIds.includes(p.productBrand));
-      }
+      let [MinNewPrice] = await sqlPool.query(
+        `Select MIN(modelsizes.newPrice) as minNewPrice
+        From products inner join productcategories ON products.id=productcategories.productId 
+        inner join models on products.id=models.productId 
+        inner join modelsizes on modelsizes.modelId=models.id
+        where productcategories.categoryId=? ${brandCondition} and modelsizes.newPrice>0`,
+        [catId]
+      );
+
+      newMinPrice = MinNewPrice[0].minNewPrice
+        ? Math.min(MinMaxPrices.minPrice, MinNewPrice[0].minNewPrice)
+        : MinMaxPrices[0].minPrice;
+
+      newMaxPrice = MinMaxPrices[0].maxPrice;
+
+      // let [products] = await sqlPool.query(
+      //   `Select products.id, productNameEn, productNameGe, productNameRu,productBrand, productInStock,
+      //   (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
+      //   From products inner join productcategories ON products.id=productcategories.productId where productcategories.categoryId=? ${brandCondition} LIMIT ? OFFSET ?`,
+      //   [catId, parseInt(perPage), (page - 1) * perPage]
+      // );
+
+      let [products] = await sqlPool.query(
+        `Select DISTINCT products.id, productNameEn, productNameGe, productNameRu,productBrand, productInStock, 
+        (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
+        From products inner join productcategories ON products.id=productcategories.productId 
+        inner join models on products.id=models.productId 
+        inner join modelsizes on modelsizes.modelId=models.id
+        where productcategories.categoryId=? ${brandCondition} ${priceCondition} LIMIT ? OFFSET ?`,
+        [catId, parseInt(perPage), (page - 1) * perPage]
+      );
+
 
       for (let i = 0; i < products.length; i++) {
-       
         products[i].prices = [];
         const [models] = await sqlPool.query(
           "select * from models where productId=?",
@@ -53,14 +86,15 @@ const productController = {
             );
 
             if (sizes.length > 0) {
-              let sortedDiscounts=sizes
+              let sortedDiscounts = sizes
                 .filter((s) => s.discount === 1)
                 .sort((a, b) => a["newPrice"] - b["newPrice"]);
-              const minDiscountSize =sortedDiscounts.length>0 ? sortedDiscounts[0] : 0;
-              let sorted=sizes
+              const minDiscountSize =
+                sortedDiscounts.length > 0 ? sortedDiscounts[0] : 0;
+              let sorted = sizes
                 .filter((s) => s.discount === 0)
                 .sort((a, b) => a["price"] - b["price"]);
-              const minSize = sorted.length>0 ? sorted[0] : 0;
+              const minSize = sorted.length > 0 ? sorted[0] : 0;
 
               if (!minDiscountSize) {
                 models[j].viewInfo = minSize;
@@ -77,44 +111,24 @@ const productController = {
                   sizes[k].discount === 1 ? sizes[k].newPrice : sizes[k].price
                 );
               }
-
-
             }
           }
-       products[i].viewInfo = models.sort(compareModels)[0];
-        }
-
-        if (products[i].prices.length > 0) {
-          if (newMinPrice === 0) {
-            newMinPrice = Math.min(...products[i].prices);
-          } else {
-            newMinPrice =
-              newMinPrice > Math.min(...products[i].prices)
-                ? Math.min(...products[i].prices)
-                : newMinPrice;
-          }
-          newMaxPrice =
-            newMaxPrice < Math.max(...products[i].prices)
-              ? Math.max(...products[i].prices)
-              : newMaxPrice;
-
-          if (minPrice > -1) {
-            if (products[i].prices.some((p) => p >= minPrice && p <= maxPrice))
-              priceFilteredProducts.push(products[i]);
-          }
+          products[i].viewInfo = models.sort(compareModels)[0];
         }
       }
 
-      const total =
-        minPrice > -1 ? priceFilteredProducts.length : products.length;
-      const result =
-        minPrice > -1 > 0
-          ? priceFilteredProducts.slice((page - 1) * perPage, page * perPage)
-          : products.slice((page - 1) * perPage, page * perPage);
+      let [total] = await sqlPool.query(
+        `Select count(DISTINCT products.id) as total
+        From products inner join productcategories ON products.id=productcategories.productId 
+        inner join models on products.id=models.productId 
+        inner join modelsizes on modelsizes.modelId=models.id
+        where productcategories.categoryId=? ${brandCondition} ${priceCondition}`,
+        [catId]
+      );
 
       res.json({
-        products: result,
-        total: total,
+        products: products,
+        total: total[0].total,
         minPrice: newMinPrice,
         maxPrice: newMaxPrice,
       });
@@ -166,15 +180,20 @@ const productController = {
           [models[i].id]
         );
 
-        const [imageLinks]=await sqlPool.query("Select imagecolorsize.id, modelId, imageId, colorId, sizeId, imgUrl from imagecolorsize inner join productimages on productimages.id=imagecolorsize.imageId where modelId=?", models[i].id);
+        const [imageLinks] = await sqlPool.query(
+          "Select imagecolorsize.id, modelId, imageId, colorId, sizeId, imgUrl from imagecolorsize inner join productimages on productimages.id=imagecolorsize.imageId where modelId=?",
+          models[i].id
+        );
 
-        const [descriptionLinks]=await sqlPool.query("Select descriptioncolorsize.id, modelId, descriptionId, colorId, sizeId, descriptionEn, descriptionGe, descriptionRu from descriptioncolorsize inner join descriptions on descriptions.id=descriptioncolorsize.descriptionId where modelId=?", models[i].id);
+        const [descriptionLinks] = await sqlPool.query(
+          "Select descriptioncolorsize.id, modelId, descriptionId, colorId, sizeId, descriptionEn, descriptionGe, descriptionRu from descriptioncolorsize inner join descriptions on descriptions.id=descriptioncolorsize.descriptionId where modelId=?",
+          models[i].id
+        );
 
-        
-        models[i].colors=colors;
-        models[i].sizes=sizes;
-        models[i].imageLinks=imageLinks;
-        models[i].descriptionLinks=descriptionLinks;
+        models[i].colors = colors;
+        models[i].sizes = sizes;
+        models[i].imageLinks = imageLinks;
+        models[i].descriptionLinks = descriptionLinks;
       }
       // const [images] = await sqlPool.query(
       //   `Select * From productimages WHERE productId=?`,
