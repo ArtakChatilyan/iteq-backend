@@ -22,34 +22,61 @@ const orderController = {
         );
         orderList[i].productInfo = productInfo;
 
-        const [modelInfo] = await sqlPool.query(
-          `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
-                    modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
-                    colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
-                    from models inner join modelsizes on models.id=modelsizes.modelId 
-                    inner join modelcolors on models.id=modelcolors.modelId 
-                    inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-          [orderList[i].productId, orderList[i].modelId]
-        );
         if (orderList[i].colorId > 0 && orderList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                          modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
+                          colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
+                          from models inner join modelsizes on models.id=modelsizes.modelId 
+                          inner join modelcolors on models.id=modelcolors.modelId 
+                          inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+            [orderList[i].productId, orderList[i].modelId]
+          );
           orderList[i].modelInfo = modelInfo.find(
             (m) =>
               m.colorId === orderList[i].colorId &&
               m.sizeId === orderList[i].sizeId
           );
         } else if (orderList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                          modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count  
+                          from models inner join modelsizes on models.id=modelsizes.modelId 
+                           where productId=? and models.id=?`,
+            [orderList[i].productId, orderList[i].modelId]
+          );
           orderList[i].modelInfo = modelInfo.find(
             (m) => m.sizeId === orderList[i].sizeId
           );
-        } else if (orderList[i].colorId > 0) {
-          orderList[i].modelInfo = modelInfo.find(
-            (m) => m.colorId === orderList[i].colorId
-          );
-        } else {
-          orderList[i].modelInfo = modelInfo.find(
-            (m) => m.modelId === orderList[i].modelId
-          );
         }
+        // const [modelInfo] = await sqlPool.query(
+        //   `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu,
+        //             modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,
+        //             colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu
+        //             from models inner join modelsizes on models.id=modelsizes.modelId
+        //             inner join modelcolors on models.id=modelcolors.modelId
+        //             inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+        //   [orderList[i].productId, orderList[i].modelId]
+        // );
+        // if (orderList[i].colorId > 0 && orderList[i].sizeId > 0) {
+        //   orderList[i].modelInfo = modelInfo.find(
+        //     (m) =>
+        //       m.colorId === orderList[i].colorId &&
+        //       m.sizeId === orderList[i].sizeId
+        //   );
+        // } else if (orderList[i].sizeId > 0) {
+        //   orderList[i].modelInfo = modelInfo.find(
+        //     (m) => m.sizeId === orderList[i].sizeId
+        //   );
+        // } else if (orderList[i].colorId > 0) {
+        //   orderList[i].modelInfo = modelInfo.find(
+        //     (m) => m.colorId === orderList[i].colorId
+        //   );
+        // } else {
+        //   orderList[i].modelInfo = modelInfo.find(
+        //     (m) => m.modelId === orderList[i].modelId
+        //   );
+        // }
       }
       res.json({ orderList: orderList, total: listCount[0].total });
     } catch (error) {
@@ -81,34 +108,61 @@ const orderController = {
         );
         orderList[i].productInfo = productInfo;
 
-        const [modelInfo] = await sqlPool.query(
-          `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
-                    modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
-                    colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
-                    from models inner join modelsizes on models.id=modelsizes.modelId 
-                    inner join modelcolors on models.id=modelcolors.modelId 
-                    inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-          [orderList[i].productId, orderList[i].modelId]
-        );
         if (orderList[i].colorId > 0 && orderList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                          modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
+                          colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
+                          from models inner join modelsizes on models.id=modelsizes.modelId 
+                          inner join modelcolors on models.id=modelcolors.modelId 
+                          inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+            [orderList[i].productId, orderList[i].modelId]
+          );
           orderList[i].modelInfo = modelInfo.find(
             (m) =>
               m.colorId === orderList[i].colorId &&
               m.sizeId === orderList[i].sizeId
           );
         } else if (orderList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                          modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count  
+                          from models inner join modelsizes on models.id=modelsizes.modelId 
+                           where productId=? and models.id=?`,
+            [orderList[i].productId, orderList[i].modelId]
+          );
           orderList[i].modelInfo = modelInfo.find(
             (m) => m.sizeId === orderList[i].sizeId
           );
-        } else if (orderList[i].colorId > 0) {
-          orderList[i].modelInfo = modelInfo.find(
-            (m) => m.colorId === orderList[i].colorId
-          );
-        } else {
-          orderList[i].modelInfo = modelInfo.find(
-            (m) => m.modelId === orderList[i].modelId
-          );
         }
+        // const [modelInfo] = await sqlPool.query(
+        //   `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu,
+        //             modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,
+        //             colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu
+        //             from models inner join modelsizes on models.id=modelsizes.modelId
+        //             inner join modelcolors on models.id=modelcolors.modelId
+        //             inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+        //   [orderList[i].productId, orderList[i].modelId]
+        // );
+        // if (orderList[i].colorId > 0 && orderList[i].sizeId > 0) {
+        //   orderList[i].modelInfo = modelInfo.find(
+        //     (m) =>
+        //       m.colorId === orderList[i].colorId &&
+        //       m.sizeId === orderList[i].sizeId
+        //   );
+        // } else if (orderList[i].sizeId > 0) {
+        //   orderList[i].modelInfo = modelInfo.find(
+        //     (m) => m.sizeId === orderList[i].sizeId
+        //   );
+        // } else if (orderList[i].colorId > 0) {
+        //   orderList[i].modelInfo = modelInfo.find(
+        //     (m) => m.colorId === orderList[i].colorId
+        //   );
+        // } else {
+        //   orderList[i].modelInfo = modelInfo.find(
+        //     (m) => m.modelId === orderList[i].modelId
+        //   );
+        // }
       }
       res.json({ orderList: orderList, total: listCount[0].total });
     } catch (error) {
@@ -144,7 +198,7 @@ const orderController = {
           [orderId]
         );
         console.log(count);
-        
+
         if (count[0].total === 0) {
           await sqlPool.query("update orderdata set orderState=1 where id=?", [
             orderId,
@@ -178,34 +232,61 @@ const orderController = {
         );
         historyList[i].productInfo = productInfo;
 
-        const [modelInfo] = await sqlPool.query(
-          `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
-                    modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
-                    colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
-                    from models inner join modelsizes on models.id=modelsizes.modelId 
-                    inner join modelcolors on models.id=modelcolors.modelId 
-                    inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-          [historyList[i].productId, historyList[i].modelId]
-        );
         if (historyList[i].colorId > 0 && historyList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                          modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
+                          colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
+                          from models inner join modelsizes on models.id=modelsizes.modelId 
+                          inner join modelcolors on models.id=modelcolors.modelId 
+                          inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+            [historyList[i].productId, historyList[i].modelId]
+          );
           historyList[i].modelInfo = modelInfo.find(
             (m) =>
               m.colorId === historyList[i].colorId &&
               m.sizeId === historyList[i].sizeId
           );
         } else if (historyList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                          modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count  
+                          from models inner join modelsizes on models.id=modelsizes.modelId 
+                           where productId=? and models.id=?`,
+            [historyList[i].productId, historyList[i].modelId]
+          );
           historyList[i].modelInfo = modelInfo.find(
             (m) => m.sizeId === historyList[i].sizeId
           );
-        } else if (historyList[i].colorId > 0) {
-          historyList[i].modelInfo = modelInfo.find(
-            (m) => m.colorId === historyList[i].colorId
-          );
-        } else {
-          historyList[i].modelInfo = modelInfo.find(
-            (m) => m.modelId === historyList[i].modelId
-          );
         }
+        // const [modelInfo] = await sqlPool.query(
+        //   `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu,
+        //             modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,
+        //             colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu
+        //             from models inner join modelsizes on models.id=modelsizes.modelId
+        //             inner join modelcolors on models.id=modelcolors.modelId
+        //             inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+        //   [historyList[i].productId, historyList[i].modelId]
+        // );
+        // if (historyList[i].colorId > 0 && historyList[i].sizeId > 0) {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) =>
+        //       m.colorId === historyList[i].colorId &&
+        //       m.sizeId === historyList[i].sizeId
+        //   );
+        // } else if (historyList[i].sizeId > 0) {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) => m.sizeId === historyList[i].sizeId
+        //   );
+        // } else if (historyList[i].colorId > 0) {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) => m.colorId === historyList[i].colorId
+        //   );
+        // } else {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) => m.modelId === historyList[i].modelId
+        //   );
+        // }
       }
       res.json({ historyList: historyList, total: listCount[0].total });
     } catch (error) {
@@ -237,34 +318,61 @@ const orderController = {
         );
         historyList[i].productInfo = productInfo;
 
-        const [modelInfo] = await sqlPool.query(
-          `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
-                    modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
-                    colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
-                    from models inner join modelsizes on models.id=modelsizes.modelId 
-                    inner join modelcolors on models.id=modelcolors.modelId 
-                    inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-          [historyList[i].productId, historyList[i].modelId]
-        );
         if (historyList[i].colorId > 0 && historyList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                          modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
+                          colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
+                          from models inner join modelsizes on models.id=modelsizes.modelId 
+                          inner join modelcolors on models.id=modelcolors.modelId 
+                          inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+            [historyList[i].productId, historyList[i].modelId]
+          );
           historyList[i].modelInfo = modelInfo.find(
             (m) =>
               m.colorId === historyList[i].colorId &&
               m.sizeId === historyList[i].sizeId
           );
         } else if (historyList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                          modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count  
+                          from models inner join modelsizes on models.id=modelsizes.modelId 
+                           where productId=? and models.id=?`,
+            [historyList[i].productId, historyList[i].modelId]
+          );
           historyList[i].modelInfo = modelInfo.find(
             (m) => m.sizeId === historyList[i].sizeId
           );
-        } else if (historyList[i].colorId > 0) {
-          historyList[i].modelInfo = modelInfo.find(
-            (m) => m.colorId === historyList[i].colorId
-          );
-        } else {
-          historyList[i].modelInfo = modelInfo.find(
-            (m) => m.modelId === historyList[i].modelId
-          );
         }
+        // const [modelInfo] = await sqlPool.query(
+        //   `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu,
+        //             modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,
+        //             colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu
+        //             from models inner join modelsizes on models.id=modelsizes.modelId
+        //             inner join modelcolors on models.id=modelcolors.modelId
+        //             inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+        //   [historyList[i].productId, historyList[i].modelId]
+        // );
+        // if (historyList[i].colorId > 0 && historyList[i].sizeId > 0) {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) =>
+        //       m.colorId === historyList[i].colorId &&
+        //       m.sizeId === historyList[i].sizeId
+        //   );
+        // } else if (historyList[i].sizeId > 0) {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) => m.sizeId === historyList[i].sizeId
+        //   );
+        // } else if (historyList[i].colorId > 0) {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) => m.colorId === historyList[i].colorId
+        //   );
+        // } else {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) => m.modelId === historyList[i].modelId
+        //   );
+        // }
       }
       res.json({ historyList: historyList, total: listCount[0].total });
     } catch (error) {

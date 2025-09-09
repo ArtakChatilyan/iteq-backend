@@ -28,34 +28,43 @@ const basketController = {
           productimages.id=imagecolorsize.imageId where modelId=? and sizeId=? and colorId=?`,
           [basketList[i].modelId, basketList[i].sizeId, basketList[i].colorId]
         );
-        const [modelInfo] = await sqlPool.query(
-          `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+
+        if (basketList[i].colorId > 0 && basketList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
           modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
           colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
           from models inner join modelsizes on models.id=modelsizes.modelId 
           inner join modelcolors on models.id=modelcolors.modelId 
           inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-          [basketList[i].productId, basketList[i].modelId]
-        );
-        if (basketList[i].colorId > 0 && basketList[i].sizeId > 0) {
+            [basketList[i].productId, basketList[i].modelId]
+          );
           basketList[i].modelInfo = modelInfo.find(
             (m) =>
               m.colorId === basketList[i].colorId &&
               m.sizeId === basketList[i].sizeId
           );
         } else if (basketList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+          modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count  
+          from models inner join modelsizes on models.id=modelsizes.modelId 
+           where productId=? and models.id=?`,
+            [basketList[i].productId, basketList[i].modelId]
+          );
           basketList[i].modelInfo = modelInfo.find(
             (m) => m.sizeId === basketList[i].sizeId
           );
-        } else if (basketList[i].colorId > 0) {
-          basketList[i].modelInfo = modelInfo.find(
-            (m) => m.colorId === basketList[i].colorId
-          );
-        } else {
-          basketList[i].modelInfo = modelInfo.find(
-            (m) => m.modelId === basketList[i].modelId
-          );
-        }
+        } 
+        // else if (basketList[i].colorId > 0) {
+        //   basketList[i].modelInfo = modelInfo.find(
+        //     (m) => m.colorId === basketList[i].colorId
+        //   );
+        // } else {
+        //   basketList[i].modelInfo = modelInfo.find(
+        //     (m) => m.modelId === basketList[i].modelId
+        //   );
+        // }
 
         if (basketImages.length > 0) {
           basketImage = basketImages[0];
@@ -123,7 +132,9 @@ const basketController = {
         [userId, productId, modelId, sizeId, colorId]
       );
       if (checkBasket.length > 0) {
-        res.json({ state: "The product is already exists in your basket list." });
+        res.json({
+          state: "The product is already exists in your basket list.",
+        });
       } else {
         const [result] = await sqlPool.query(
           `INSERT INTO basket(userId, productId, modelId, sizeId, colorId, count) VALUES (?,?,?,?,?,?)`,

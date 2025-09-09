@@ -26,36 +26,70 @@ const historyController = {
         const [historyImages] = await sqlPool.query(
           `select productimages.id, productId, imgUrl from productimages inner join imagecolorsize on 
                 productimages.id=imagecolorsize.imageId where modelId=? and sizeId=? and colorId=?`,
-          [historyList[i].modelId, historyList[i].sizeId, historyList[i].colorId]
+          [
+            historyList[i].modelId,
+            historyList[i].sizeId,
+            historyList[i].colorId,
+          ]
         );
-        const [modelInfo] = await sqlPool.query(
-          `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
-                modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
-                colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
-                from models inner join modelsizes on models.id=modelsizes.modelId 
-                inner join modelcolors on models.id=modelcolors.modelId 
-                inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-          [historyList[i].productId, historyList[i].modelId]
-        );
+
         if (historyList[i].colorId > 0 && historyList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                  modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,  
+                  colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu 
+                  from models inner join modelsizes on models.id=modelsizes.modelId 
+                  inner join modelcolors on models.id=modelcolors.modelId 
+                  inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+            [historyList[i].productId, historyList[i].modelId]
+          );
           historyList[i].modelInfo = modelInfo.find(
             (m) =>
               m.colorId === historyList[i].colorId &&
               m.sizeId === historyList[i].sizeId
           );
         } else if (historyList[i].sizeId > 0) {
+          const [modelInfo] = await sqlPool.query(
+            `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu, 
+                  modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count  
+                  from models inner join modelsizes on models.id=modelsizes.modelId 
+                   where productId=? and models.id=?`,
+            [historyList[i].productId, historyList[i].modelId]
+          );
           historyList[i].modelInfo = modelInfo.find(
             (m) => m.sizeId === historyList[i].sizeId
           );
-        } else if (historyList[i].colorId > 0) {
-          historyList[i].modelInfo = modelInfo.find(
-            (m) => m.colorId === historyList[i].colorId
-          );
-        } else {
-          historyList[i].modelInfo = modelInfo.find(
-            (m) => m.modelId === historyList[i].modelId
-          );
         }
+
+        // const [modelInfo] = await sqlPool.query(
+        //   `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu,
+        //         modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,
+        //         colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu
+        //         from models inner join modelsizes on models.id=modelsizes.modelId
+        //         inner join modelcolors on models.id=modelcolors.modelId
+        //         inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
+        //   [historyList[i].productId, historyList[i].modelId]
+        // );
+
+        // if (historyList[i].colorId > 0 && historyList[i].sizeId > 0) {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) =>
+        //       m.colorId === historyList[i].colorId &&
+        //       m.sizeId === historyList[i].sizeId
+        //   );
+        // } else if (historyList[i].sizeId > 0) {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) => m.sizeId === historyList[i].sizeId
+        //   );
+        // } else if (historyList[i].colorId > 0) {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) => m.colorId === historyList[i].colorId
+        //   );
+        // } else {
+        //   historyList[i].modelInfo = modelInfo.find(
+        //     (m) => m.modelId === historyList[i].modelId
+        //   );
+        // }
 
         if (historyImages.length > 0) {
           historyImage = historyImages[0];
