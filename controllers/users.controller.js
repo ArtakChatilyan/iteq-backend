@@ -80,7 +80,41 @@ const userCntroller = {
       next(e);
     }
   },
-  forgotPassword: async (req, res, next) => {},
+  recover: async (req, res, next) => {
+    try {
+      const { email } = req.body;
+      const userData = await userService.recover(email);
+      res.json(userData);
+    } catch (e) {
+      next(e);
+    }
+  },
+  passwordRecovery: async (req, res, next) => {
+    try {
+      const link = req.params.link;
+      const userData = await userService.checkRecoveryLink(link);
+
+      if (userData) {
+        return res.redirect(
+          `${process.env.CLIENT_URL}/passwordRecovery/${userData.userId}`
+        );
+      }
+    } catch (e) {
+      return res.redirect(`${process.env.CLIENT_URL}/passwordRecovery`);
+    }
+  },
+  setPassword: async (req, res, next) => {
+    try {
+      const { userId, password } = req.body;
+      const result = await userService.setPassword(
+        userId,
+        password
+      );
+      res.json(result);
+    } catch (e) {
+      next(e);
+    }
+  },
   refresh: async (req, res, next) => {
     try {
       const { refreshTokenIteq } = req.cookies;

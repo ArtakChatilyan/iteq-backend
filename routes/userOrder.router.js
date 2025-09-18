@@ -6,4 +6,6 @@ router.get('/', orderController.getUserOrders);
 
 router.post('/', orderController.addOrders);
 
+router.put('/:orderId', orderController.cancelOrder);
+
 module.exports=router;

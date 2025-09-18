@@ -187,6 +187,22 @@ const orderController = {
       res.json({ state: error });
     }
   },
+  cancelOrder: async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const [result] = await sqlPool.query(
+        `UPDATE orders set state=1 where id=?`,
+        [orderId]
+      );
+      const rows = await sqlPool.query(`Select * From orders WHERE id=?`, [
+        orderId,
+      ]);
+      res.json({ order: rows[0] });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
 
   //   deleteBasket: async (req, res) => {
   //     try {

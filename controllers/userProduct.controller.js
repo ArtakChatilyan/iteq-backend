@@ -20,13 +20,13 @@ const productController = {
       let newMaxPrice = 0;
 
       let brandCondition = "";
-      if (brands.length > 0) {
-        brandCondition = " and products.productBrand in (" + brands + ") ";
+      if (brands!=='0') {
+        brandCondition = " and products.productBrand in (" + brands.split('_') + ") ";
       }
 
       let priceCondition = "";
       if (minPrice > -1) {
-        priceCondition = `and ((modelsizes.price>${minPrice} and modelsizes.price<${maxPrice}) or(modelsizes.newPrice>${minPrice} and modelsizes.newPrice<${maxPrice} and modelsizes.newPrice>0))`;
+        priceCondition = `and ((modelsizes.price>=${minPrice} and modelsizes.price<=${maxPrice}) or(modelsizes.newPrice>=${minPrice} and modelsizes.newPrice<=${maxPrice} and modelsizes.newPrice>0))`;
       }
 
       let [MinMaxPrices] = await sqlPool.query(
@@ -54,20 +54,13 @@ const productController = {
 
       newMaxPrice = MinMaxPrices[0].maxPrice;
 
-      // let [products] = await sqlPool.query(
-      //   `Select products.id, productNameEn, productNameGe, productNameRu,productBrand, productInStock,
-      //   (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
-      //   From products inner join productcategories ON products.id=productcategories.productId where productcategories.categoryId=? ${brandCondition} LIMIT ? OFFSET ?`,
-      //   [catId, parseInt(perPage), (page - 1) * perPage]
-      // );
-
       let [products] = await sqlPool.query(
         `Select DISTINCT products.id, productNameEn, productNameGe, productNameRu,productBrand, productInStock, 
         (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
         From products inner join productcategories ON products.id=productcategories.productId 
         inner join models on products.id=models.productId 
         inner join modelsizes on modelsizes.modelId=models.id
-        where productcategories.categoryId=? ${brandCondition} ${priceCondition} LIMIT ? OFFSET ?`,
+        where productcategories.categoryId=? and products.productInStock=1 ${brandCondition} ${priceCondition} LIMIT ? OFFSET ?`,
         [catId, parseInt(perPage), (page - 1) * perPage]
       );
 
@@ -122,7 +115,7 @@ const productController = {
         From products inner join productcategories ON products.id=productcategories.productId 
         inner join models on products.id=models.productId 
         inner join modelsizes on modelsizes.modelId=models.id
-        where productcategories.categoryId=? ${brandCondition} ${priceCondition}`,
+        where productcategories.categoryId=? and products.productInStock=1 ${brandCondition} ${priceCondition}`,
         [catId]
       );
 

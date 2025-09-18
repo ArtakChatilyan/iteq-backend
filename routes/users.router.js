@@ -16,7 +16,9 @@ router.post("/logout", userCntroller.logout);
 router.post("/changePassword", authMiddleWare,  userCntroller.changePassword);
 
 router.get("/activate/:link", userCntroller.activate);
-router.get("/forgotPassword/:link", userCntroller.forgotPassword);
+router.post("/recover", userCntroller.recover);
+router.get("/passwordRecovery/:link", userCntroller.passwordRecovery);
+router.post("/setPassword", userCntroller.setPassword);
 router.get("/refresh", userCntroller.refresh);
 router.get("/",  userCntroller.getUsers); //authMiddleWare,
 router.post("/email", userCntroller.email);

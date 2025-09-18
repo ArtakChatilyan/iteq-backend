@@ -7,7 +7,7 @@ const orderController = {
       const perPage = parseInt(req.query.perPage);
       const [orderList] = await sqlPool.query(
         `select orders.id, orders.orderId, orders.userId, orders.productId, orders.modelId, orders.sizeId, orders.colorId, 
-        orders.count, orders.price, DATE_FORMAT(orderdata.orderDate, '%d-%m-%Y %H:%i:%s') AS orderDate, email 
+        orders.count, orders.price, DATE_FORMAT(orderdata.orderDate, '%d-%m-%Y %H:%i:%s') AS orderDate, email, orders.state 
         from orders inner join orderdata on orders.orderId=orderdata.id inner join users on orders.userId=users.userId ORDER BY orders.id DESC LIMIT ? OFFSET ?`,
         [perPage, (page - 1) * perPage]
       );
@@ -197,13 +197,45 @@ const orderController = {
           "select count(*) as total from orders where orderId=?",
           [orderId]
         );
-        console.log(count);
-
         if (count[0].total === 0) {
           await sqlPool.query("update orderdata set orderState=1 where id=?", [
             orderId,
           ]);
         }
+      }
+      res.json({ message: "done!" });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+  cancelOrder: async (req, res) => {
+    try {
+      const { cancelId, orderId } = req.body;
+
+      const [orders] = await sqlPool.query("select * from orders where id=?", [
+        cancelId,
+      ]);
+      await sqlPool.query("delete from orders where id=?", [cancelId]);
+      const [countOrders] = await sqlPool.query(
+        "select count(*) as total from orders where orderId=?",
+        [orderId]
+      );
+      const [countHistory] = await sqlPool.query(
+        "select count(*) as total from orderhistory where orderId=?",
+        [orderId]
+      );
+      if (countOrders[0].total === 0 && countHistory[0].total === 0) {
+        await sqlPool.query("delete from orderdata where id=?", [orderId]);
+      } else if (countOrders[0].total === 0 && countHistory[0].total > 0) {
+        await sqlPool.query("update orderdata set orderState=1 where id=?", [
+          orderId,
+        ]);
+      } else {
+        await sqlPool.query("update orderdata set price=price-? where id=?", [
+          orders[0].price,
+          orderId,
+        ]);
       }
       res.json({ message: "done!" });
     } catch (error) {

@@ -166,6 +166,67 @@ const userService = {
       throw ApiError.UnauhtorizedError();
     }
   },
+  recover: async (email) => {
+    const [users] = await sqlPool.query("select * from users where email=?", [
+      email,
+    ]);
+    if (users.length === 0) throw ApiError.BadRequest("Wrong email!");
+
+    const recoveryLink = uuid.v4();
+    let date = new Date();
+    const linkDate = new Date(
+      new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    )
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
+    const [insertedData] = await sqlPool.query(
+      "insert into recovery(userId, email, recoveryLink, dateLink) values (?,?,?,?)",
+      [users[0].userId, users[0].email, recoveryLink, linkDate]
+    );
+    await mailService.sendRecoveryMail(
+      email,
+      `${process.env.API_URL}/api/v1/users/passwordRecovery/${recoveryLink}`
+    );
+  },
+  checkRecoveryLink: async (link) => {
+    const [userData] = await sqlPool.query(
+      "select * from recovery where recoveryLink=?",
+      [link]
+    );
+    if (userData.length === 0) {
+      throw ApiError.BadRequest("Wrong recovery link");
+    }
+
+    const currentDate = new Date().getTime();
+
+    for (let i = 0; i < userData.length; i++) {
+      const dbDate = new Date(userData[0].dateLink).getTime();
+      const dateDiff = (currentDate - dbDate) / (60 * 1000);
+
+      if (dateDiff > 3) {
+        await sqlPool.query("delete from recovery where recoveryLink=?", link);
+      }
+    }
+
+    const dbDate = new Date(userData[0].dateLink).getTime();
+    const dateDiff = (currentDate - dbDate) / (60 * 1000);
+    if (dateDiff < 3) {
+      return userData[0];
+    } else {
+      throw ApiError.BadRequest("Wrong recovery link");
+    }
+  },
+  setPassword: async (userId, password) => {
+    const hashPassword = await bcrypt.hash(password, 10);
+    console.log(hashPassword);
+    await sqlPool.query("update users set password=? where userId=?", [
+      hashPassword,
+      userId,
+    ]);
+
+    return { result: "password changed" };
+  },
   getUsers: async (page, perPage) => {
     const [users] = await sqlPool.query(
       "select * from users  LIMIT ? OFFSET ?", //where role=0
