@@ -10,6 +10,7 @@ const userCntroller = {
         next(ApiError.BadRequest("Invalid email or password", errors.array()));
       }
       const { email, password, name, phone } = req.body;
+            
       const userData = await userService.registration(
         email,
         password,

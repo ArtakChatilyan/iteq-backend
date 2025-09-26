@@ -13,17 +13,18 @@ const userService = {
       "select * from users where email=?",
       [email]
     );
+
     if (existUser.length > 0) {
       throw ApiError.BadRequest("A user with this email already exists");
     }
-
     const hashPassword = await bcrypt.hash(password, 10);
     const activationLink = uuid.v4();
-    const [insertedData] = await sqlPool.query(
-      "insert into users(email, password,name, phone, activationLink, role) values (?,?,?,?,?,?)",
-      [email, hashPassword, name, phone, activationLink, 0]
-    );
 
+    const [insertedData] = await sqlPool.query(
+      "insert into users(email, password,name, phone, activationLink,isActivated, role) values (?,?,?,?,?,?,?)",
+      [email, hashPassword, name, phone, activationLink, 0, 0]
+    );
+    console.log(insertedData);
     //await mailService.sendActivationMail(email, activationLink);
     await mailService.sendActivationMail(
       email,

@@ -4,6 +4,7 @@ const orderController = require("../controllers/orders.controller");
 
 router.get("/", orderController.getOrders);
 router.get("/byClient", orderController.getUserOrders);
+router.put("/byClient", orderController.approveOrder);
 router.post("/close", orderController.closeOrder);
 router.post("/cancel", orderController.cancelOrder);
 router.get("/history", orderController.getHistory);

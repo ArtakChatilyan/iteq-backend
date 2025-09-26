@@ -49,34 +49,6 @@ const orderController = {
             (m) => m.sizeId === orderList[i].sizeId
           );
         }
-        // const [modelInfo] = await sqlPool.query(
-        //   `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu,
-        //             modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,
-        //             colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu
-        //             from models inner join modelsizes on models.id=modelsizes.modelId
-        //             inner join modelcolors on models.id=modelcolors.modelId
-        //             inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-        //   [orderList[i].productId, orderList[i].modelId]
-        // );
-        // if (orderList[i].colorId > 0 && orderList[i].sizeId > 0) {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) =>
-        //       m.colorId === orderList[i].colorId &&
-        //       m.sizeId === orderList[i].sizeId
-        //   );
-        // } else if (orderList[i].sizeId > 0) {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) => m.sizeId === orderList[i].sizeId
-        //   );
-        // } else if (orderList[i].colorId > 0) {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) => m.colorId === orderList[i].colorId
-        //   );
-        // } else {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) => m.modelId === orderList[i].modelId
-        //   );
-        // }
       }
       res.json({ orderList: orderList, total: listCount[0].total });
     } catch (error) {
@@ -135,36 +107,23 @@ const orderController = {
             (m) => m.sizeId === orderList[i].sizeId
           );
         }
-        // const [modelInfo] = await sqlPool.query(
-        //   `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu,
-        //             modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,
-        //             colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu
-        //             from models inner join modelsizes on models.id=modelsizes.modelId
-        //             inner join modelcolors on models.id=modelcolors.modelId
-        //             inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-        //   [orderList[i].productId, orderList[i].modelId]
-        // );
-        // if (orderList[i].colorId > 0 && orderList[i].sizeId > 0) {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) =>
-        //       m.colorId === orderList[i].colorId &&
-        //       m.sizeId === orderList[i].sizeId
-        //   );
-        // } else if (orderList[i].sizeId > 0) {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) => m.sizeId === orderList[i].sizeId
-        //   );
-        // } else if (orderList[i].colorId > 0) {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) => m.colorId === orderList[i].colorId
-        //   );
-        // } else {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) => m.modelId === orderList[i].modelId
-        //   );
-        // }
       }
       res.json({ orderList: orderList, total: listCount[0].total });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+  approveOrder: async (req, res) => {
+    try {
+      const { orderId } = req.body;
+      const {user}=await sqlPool.query("select userId from orders where id=?", [orderId]);
+      const [result] = await sqlPool.query(
+        "update orders set state=1 where id=?",
+        [orderId]
+      );
+      // send mail to user[0].userId
+      res.json({ result: result });
     } catch (error) {
       console.log(error);
       res.json({ state: error });

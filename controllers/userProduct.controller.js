@@ -48,8 +48,8 @@ const productController = {
         [catId]
       );
 
-      newMinPrice = MinNewPrice[0].minNewPrice
-        ? Math.min(MinMaxPrices.minPrice, MinNewPrice[0].minNewPrice)
+      newMinPrice = MinNewPrice[0].minNewPrice>0
+        ? Math.min(MinMaxPrices[0].minPrice, MinNewPrice[0].minNewPrice)
         : MinMaxPrices[0].minPrice;
 
       newMaxPrice = MinMaxPrices[0].maxPrice;

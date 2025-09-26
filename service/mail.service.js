@@ -39,6 +39,24 @@ const mailService = {
       html: `<div><a href=${link}>password recovery tools(available within 3 minutes)</a></div>`,
     });
   },
+  sendOrderApproveMail: async (to) => {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: "artak.chatilyan@gmail.com",
+      subject: "Order approvement on ITEQ",
+      text: "Your order is approved...",
+    });
+  },
   sendQuestion: async (to, Firstname, Lastname, Email, Phone, Message) => {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,

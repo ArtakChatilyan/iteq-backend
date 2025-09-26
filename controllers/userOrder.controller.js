@@ -56,36 +56,6 @@ const orderController = {
             (m) => m.sizeId === orderList[i].sizeId
           );
         }
-        // const [modelInfo] = await sqlPool.query(
-        //   `select models.id as modelId, models.nameEn as modelNameEn, models.nameGe as modelNameGe, models.nameRu as modelNameRu,
-        //         modelsizes.id as sizeId, dimension, weight, price, discount, newPrice, count,
-        //         colors.id as colorId, colors.nameEn as colorNameEn, colors.nameGe as colorNameGe, colors.nameRu as colorNameRu
-        //         from models inner join modelsizes on models.id=modelsizes.modelId
-        //         inner join modelcolors on models.id=modelcolors.modelId
-        //         inner join colors on modelcolors.colorId=colors.id where productId=? and models.id=?`,
-        //   [orderList[i].productId, orderList[i].modelId]
-        // );
-
-        // if (orderList[i].colorId > 0 && orderList[i].sizeId > 0) {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) =>
-        //       m.colorId === orderList[i].colorId &&
-        //       m.sizeId === orderList[i].sizeId
-        //   );
-        // } else if (orderList[i].sizeId > 0) {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) => m.sizeId === orderList[i].sizeId
-        //   );
-        // } else if (orderList[i].colorId > 0) {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) => m.colorId === orderList[i].colorId
-        //   );
-        // } else {
-        //   orderList[i].modelInfo = modelInfo.find(
-        //     (m) => m.modelId === orderList[i].modelId
-        //   );
-        // }
-
         if (orderImages.length > 0) {
           orderImage = orderImages[0];
         } else {
@@ -103,46 +73,6 @@ const orderController = {
       res.json({ state: error });
     }
   },
-
-  //   getUserTotal: async (req, res) => {
-  //     try {
-  //       const userId = req.params.userId;
-  //       const [rowsCount] = await sqlPool.query(
-  //         "Select count(*) as total From basket where userId=?",
-  //         [userId]
-  //       );
-  //       res.json({ total: rowsCount[0].total });
-  //     } catch (error) {
-  //       console.log(error);
-  //       res.json({ state: error });
-  //     }
-  //   },
-
-  //   getBasket: async (req, res) => {
-  //     try {
-  //       const [rows] = await sqlPool.query(`Select * From basket WHERE id=?`, [
-  //         req.params.id,
-  //       ]);
-  //       res.json({ basket: rows[0] });
-  //     } catch (error) {
-  //       console.log(error);
-  //       res.json({ state: error });
-  //     }
-  //   },
-
-  //   updateBasketCount: async (req, res) => {
-  //     try {
-  //       const { basketId, count } = req.body;
-  //       const [result] = await sqlPool.query(
-  //         "update basket set count=? where id=?",
-  //         [count, basketId]
-  //       );
-  //       res.json({ result: result });
-  //     } catch (error) {
-  //       console.log(error);
-  //       res.json({ state: error });
-  //     }
-  //   },
 
   addOrders: async (req, res) => {
     try {
@@ -190,10 +120,42 @@ const orderController = {
   cancelOrder: async (req, res) => {
     try {
       const { orderId } = req.params;
-      const [result] = await sqlPool.query(
-        `UPDATE orders set state=1 where id=?`,
+      const { currentOrder } = await sqlPool.query(
+        `Select * From orders WHERE id=?`,
         [orderId]
       );
+      const orderDataId = currentOrder.orderId;
+      if (currentOrder[0].state === 0) {
+        const [result] = await sqlPool.query(`DELETE from orders where id=?`, [
+          orderId,
+        ]);
+        const [countOrders] = await sqlPool.query(
+          "select count(*) as total from orders where orderId=?",
+          [orderDataId]
+        );
+        const [countHistory] = await sqlPool.query(
+          "select count(*) as total from orderhistory where orderId=?",
+          [orderDataId]
+        );
+        if (countOrders[0].total === 0 && countHistory[0].total === 0) {
+          await sqlPool.query("delete from orderdata where id=?", [orderDataId]);
+        } else if (countOrders[0].total === 0 && countHistory[0].total > 0) {
+          await sqlPool.query("update orderdata set orderState=1 where id=?", [
+            orderDataId,
+          ]);
+        } else {
+          await sqlPool.query("update orderdata set price=price-? where id=?", [
+            currentOrder[0].price,
+            orderDataId,
+          ]);
+        }
+      } else if (currentOrder[0].state === 1) {
+        const [result] = await sqlPool.query(
+          `UPDATE orders set state=2 where id=?`,
+          [orderId]
+        );
+      }
+
       const rows = await sqlPool.query(`Select * From orders WHERE id=?`, [
         orderId,
       ]);
@@ -203,20 +165,6 @@ const orderController = {
       res.json({ state: error });
     }
   },
-
-  //   deleteBasket: async (req, res) => {
-  //     try {
-  //       const { id } = req.params;
-
-  //       const [result] = await sqlPool.query(`DELETE FROM basket WHERE id = ?`, [
-  //         id,
-  //       ]);
-  //       res.json({ data: result });
-  //     } catch (error) {
-  //       console.log(error);
-  //       res.json({ state: error });
-  //     }
-  //   },
 };
 
 module.exports = orderController;
