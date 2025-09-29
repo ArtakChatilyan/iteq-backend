@@ -120,41 +120,49 @@ const orderController = {
   cancelOrder: async (req, res) => {
     try {
       const { orderId } = req.params;
-      const { currentOrder } = await sqlPool.query(
-        `Select * From orders WHERE id=?`,
+
+      const [result] = await sqlPool.query(
+        `UPDATE orders set state=1 where id=?`,
         [orderId]
       );
-      const orderDataId = currentOrder.orderId;
-      if (currentOrder[0].state === 0) {
-        const [result] = await sqlPool.query(`DELETE from orders where id=?`, [
-          orderId,
-        ]);
-        const [countOrders] = await sqlPool.query(
-          "select count(*) as total from orders where orderId=?",
-          [orderDataId]
-        );
-        const [countHistory] = await sqlPool.query(
-          "select count(*) as total from orderhistory where orderId=?",
-          [orderDataId]
-        );
-        if (countOrders[0].total === 0 && countHistory[0].total === 0) {
-          await sqlPool.query("delete from orderdata where id=?", [orderDataId]);
-        } else if (countOrders[0].total === 0 && countHistory[0].total > 0) {
-          await sqlPool.query("update orderdata set orderState=1 where id=?", [
-            orderDataId,
-          ]);
-        } else {
-          await sqlPool.query("update orderdata set price=price-? where id=?", [
-            currentOrder[0].price,
-            orderDataId,
-          ]);
-        }
-      } else if (currentOrder[0].state === 1) {
-        const [result] = await sqlPool.query(
-          `UPDATE orders set state=2 where id=?`,
-          [orderId]
-        );
-      }
+
+      // const { currentOrder } = await sqlPool.query(
+      //   `Select * From orders WHERE id=?`,
+      //   [orderId]
+      // );
+      // const orderDataId = currentOrder.orderId;
+      // if (currentOrder[0].state === 0) {
+      //   const [result] = await sqlPool.query(`DELETE from orders where id=?`, [
+      //     orderId,
+      //   ]);
+      //   const [countOrders] = await sqlPool.query(
+      //     "select count(*) as total from orders where orderId=?",
+      //     [orderDataId]
+      //   );
+      //   const [countHistory] = await sqlPool.query(
+      //     "select count(*) as total from orderhistory where orderId=?",
+      //     [orderDataId]
+      //   );
+      //   if (countOrders[0].total === 0 && countHistory[0].total === 0) {
+      //     await sqlPool.query("delete from orderdata where id=?", [
+      //       orderDataId,
+      //     ]);
+      //   } else if (countOrders[0].total === 0 && countHistory[0].total > 0) {
+      //     await sqlPool.query("update orderdata set orderState=1 where id=?", [
+      //       orderDataId,
+      //     ]);
+      //   } else {
+      //     await sqlPool.query("update orderdata set price=price-? where id=?", [
+      //       currentOrder[0].price,
+      //       orderDataId,
+      //     ]);
+      //   }
+      // } else if (currentOrder[0].state === 1) {
+      //   const [result] = await sqlPool.query(
+      //     `UPDATE orders set state=2 where id=?`,
+      //     [orderId]
+      //   );
+      // }
 
       const rows = await sqlPool.query(`Select * From orders WHERE id=?`, [
         orderId,

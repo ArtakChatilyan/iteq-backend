@@ -9,5 +9,6 @@ router.post("/close", orderController.closeOrder);
 router.post("/cancel", orderController.cancelOrder);
 router.get("/history", orderController.getHistory);
 router.get("/history/byClient", orderController.getUserHistory);
+router.get("/count", orderController.getCount);
 
 module.exports = router;

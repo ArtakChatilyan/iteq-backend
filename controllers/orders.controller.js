@@ -117,7 +117,10 @@ const orderController = {
   approveOrder: async (req, res) => {
     try {
       const { orderId } = req.body;
-      const {user}=await sqlPool.query("select userId from orders where id=?", [orderId]);
+      const { user } = await sqlPool.query(
+        "select userId from orders where id=?",
+        [orderId]
+      );
       const [result] = await sqlPool.query(
         "update orders set state=1 where id=?",
         [orderId]
@@ -366,6 +369,23 @@ const orderController = {
         // }
       }
       res.json({ historyList: historyList, total: listCount[0].total });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
+  getCount: async (req, res) => {
+    try {
+      const [total] = await sqlPool.query(
+        `select count(*) as total
+        from orders`
+      );
+      const [totalCanceled] = await sqlPool.query(
+        `select count(*) as total
+        from orders where state =1`
+      );
+      res.json({ total: total[0].total, totalCanceled: totalCanceled[0].total });
     } catch (error) {
       console.log(error);
       res.json({ state: error });
