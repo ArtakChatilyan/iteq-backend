@@ -53,9 +53,15 @@ const mailService = {
     await transporter.sendMail({
       from: process.env.SMTP_USER,
       to: "artak.chatilyan@gmail.com",
-      subject: "Order approvement on ITEQ",
-      text: "Your order is approved...",
+      subject: "Order approvement from ITEQ",
+      text: "",
+      html: `<div><div> Your order has been confirmed. Please proceed with the payment so we can start processing.</div>
+                  <div>თქვენი შეკვეთა დადასტურებულია. გთხოვთ, განახორციელოთ გადახდა, რათა დავიწყოთ დამუშავების პროცესი.</div>
+                  <div>Ваш заказ подтверждён. Пожалуйста, произведите оплату, чтобы мы могли начать обработку.</div>
+            </div>`,
     });
+    console.log(to);
+    
   },
   sendQuestion: async (to, Firstname, Lastname, Email, Phone, Message) => {
     const transporter = nodemailer.createTransport({

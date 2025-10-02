@@ -1,4 +1,5 @@
 const sqlPool = require("../database");
+const mailService = require("../service/mail.service");
 
 const orderController = {
   getOrders: async (req, res) => {
@@ -125,7 +126,9 @@ const orderController = {
         "update orders set state=1 where id=?",
         [orderId]
       );
-      // send mail to user[0].userId
+      const userData=await sqlPool.query("select * from users where userId=?", [user[0].userId]);
+      await mailService.sendOrderApproveMail(userData[0].email);
+      
       res.json({ result: result });
     } catch (error) {
       console.log(error);
@@ -383,7 +386,7 @@ const orderController = {
       );
       const [totalCanceled] = await sqlPool.query(
         `select count(*) as total
-        from orders where state =1`
+        from orders where state =3`
       );
       res.json({ total: total[0].total, totalCanceled: totalCanceled[0].total });
     } catch (error) {
