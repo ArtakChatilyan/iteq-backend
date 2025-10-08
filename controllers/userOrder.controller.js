@@ -120,15 +120,16 @@ const orderController = {
   cancelOrder: async (req, res) => {
     try {
       const { orderId, actionType } = req.params;
-      if (actionType === 2) {
+      if (actionType == 2) {
         const [result] = await sqlPool.query(
           `UPDATE orders set state=2 where id=?`,
           [orderId]
         );
-      } else if (actionType === 3) {
-        const { currentOrder } = await sqlPool.query(
+      } else if (actionType == 3) {
+        
+        const [currentOrder] = await sqlPool.query(
           `Select * From orders WHERE id=?`,
-          [orderId]
+          [parseInt(orderId)]
         );
         const orderDataId = currentOrder.orderId;
         if (currentOrder[0].state === 0) {

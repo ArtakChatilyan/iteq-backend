@@ -33,7 +33,7 @@ const mailService = {
 
     await transporter.sendMail({
       from: process.env.SMTP_USER,
-      to: "artak.chatilyan@gmail.com",
+      to: to,
       subject: "Password recovery on ITEQ",
       text: "",
       html: `<div><a href=${link}>password recovery tools(available within 3 minutes)</a></div>`,
@@ -52,7 +52,7 @@ const mailService = {
 
     await transporter.sendMail({
       from: process.env.SMTP_USER,
-      to: "artak.chatilyan@gmail.com",
+      to: to,
       subject: "Order approvement from ITEQ",
       text: "",
       html: `<div><div> Your order has been confirmed. Please proceed with the payment so we can start processing.</div>
@@ -63,7 +63,7 @@ const mailService = {
     console.log(to);
     
   },
-  sendQuestion: async (to, Firstname, Lastname, Email, Phone, Message) => {
+  sendQuestion: async (Firstname, Lastname, Email, Phone, Message) => {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
@@ -76,7 +76,7 @@ const mailService = {
 
     await transporter.sendMail({
       from: process.env.SMTP_USER,
-      to: to,
+      to: process.env.SMTP_USER,
       subject: "from:" + Email,
       text: "",
       html: `<div><div>${Firstname} ${Lastname}<div><div>${Phone}<div><div>${Message}<div></div>`,

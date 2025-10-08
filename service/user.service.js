@@ -24,12 +24,15 @@ const userService = {
       "insert into users(email, password,name, phone, activationLink,isActivated, role) values (?,?,?,?,?,?,?)",
       [email, hashPassword, name, phone, activationLink, 0, 0]
     );
-    console.log(insertedData);
     //await mailService.sendActivationMail(email, activationLink);
+    console.log("before email");
+    
     await mailService.sendActivationMail(
       email,
       `${process.env.API_URL}/api/v1/users/activate/${activationLink}`
     );
+
+    console.log("after email");
 
     const [user] = await sqlPool.query("select * from users where userId=?", [
       insertedData.insertId,
@@ -230,15 +233,14 @@ const userService = {
   },
   getUsers: async (page, perPage) => {
     const [users] = await sqlPool.query(
-      "select * from users  LIMIT ? OFFSET ?", //where role=0
+      "select * from users where role=0  LIMIT ? OFFSET ?", //where role=0
       [perPage, (page - 1) * perPage]
     );
-    const [count] = await sqlPool.query("select count(*) as total from users "); //where role=0
+    const [count] = await sqlPool.query("select count(*) as total from users where role=0"); //where role=0
     return { users: users, total: count[0].total };
   },
   sendEmail: async (Firstname, Lastname, Email, Phone, Message) => {
     await mailService.sendQuestion(
-      "artak.chatilyan@gmail.com",
       Firstname,
       Lastname,
       Email,

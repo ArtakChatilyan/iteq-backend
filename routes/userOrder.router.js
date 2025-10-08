@@ -6,6 +6,6 @@ router.get('/', orderController.getUserOrders);
 
 router.post('/', orderController.addOrders);
 
-router.put('/:orderId', orderController.cancelOrder);
+router.put('/:orderId/:actionType', orderController.cancelOrder);
 
 module.exports=router;
