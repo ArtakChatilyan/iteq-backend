@@ -53,6 +53,10 @@ router.get('/productImages/:id', productController.getProductImages);
 
 router.post('/productImages',upload.single("imgUrl"), productController.addProductImage);
 
+router.get('/productMedias/:id', productController.getProductMedias);
+
+router.post('/productMedias',upload.single("mediaUrl"), productController.addProductMedia);
+
 router.get('/descriptions/:productId', productController.getDescriptions);
 
 router.get('/description/:descriptionId', productController.getDescription);
@@ -70,5 +74,7 @@ router.delete('/descriptions/:descriptionId', productController.deleteDescriptio
 // router.delete('/productImageColorSize/:id', productController.deleteImageColorSize);
 
 router.delete('/productImage/:id', productController.deleteProductImage);
+
+router.delete('/productMedia/:id', productController.deleteProductMedia);
 
 module.exports=router;

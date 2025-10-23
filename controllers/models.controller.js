@@ -238,6 +238,49 @@ const modelsController = {
       res.json({ state: error });
     }
   },
+
+  getMediaColorSize: async (req, res) => {
+    try {
+      const [rows] = await sqlPool.query(
+        `Select * From mediacolorsize WHERE modelId=? and mediaId=?`,
+        [req.params.modelId, req.params.mediaId]
+      );
+      res.json({ colorSize: rows });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
+  setMediaColorSize: async (req, res) => {
+    try {
+      const { mediaId, modelId, color, size } = req.body;
+
+      await sqlPool.query(
+        `insert into mediacolorsize(mediaId, modelId, colorId, sizeId) values(?,?,?,?)`,
+        [mediaId, modelId, color ? color : null, size ? size : null]
+      );
+
+      res.json({ message: "done!" });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
+  deleteMediaColorSize: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      await sqlPool.query(`delete from mediacolorsize where id=?`, [id]);
+
+      res.json({ message: "done!" });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
   getDescriptionColorSize: async (req, res) => {
     try {
       const [rows] = await sqlPool.query(

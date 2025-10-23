@@ -26,7 +26,7 @@ const userService = {
     );
     //await mailService.sendActivationMail(email, activationLink);
     console.log("before email");
-    
+
     await mailService.sendActivationMail(
       email,
       `${process.env.API_URL}/api/v1/users/activate/${activationLink}`
@@ -177,16 +177,16 @@ const userService = {
     if (users.length === 0) throw ApiError.BadRequest("Wrong email!");
 
     const recoveryLink = uuid.v4();
-    let date = new Date();
-    const linkDate = new Date(
-      new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-    )
-      .toISOString()
-      .slice(0, 19)
-      .replace("T", " ");
+    //let date = new Date();
+    // const linkDate = new Date(
+    //   new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    // )
+    //   .toISOString()
+    //   .slice(0, 19)
+    //   .replace("T", " ");
     const [insertedData] = await sqlPool.query(
-      "insert into recovery(userId, email, recoveryLink, dateLink) values (?,?,?,?)",
-      [users[0].userId, users[0].email, recoveryLink, linkDate]
+      "insert into recovery(userId, email, recoveryLink, dateLink) values (?,?,?,Now())",
+      [users[0].userId, users[0].email, recoveryLink]
     );
     await mailService.sendRecoveryMail(
       email,
@@ -194,31 +194,18 @@ const userService = {
     );
   },
   checkRecoveryLink: async (link) => {
+    await sqlPool.query(
+      "delete from recovery where TIMESTAMPDIFF(MINUTE, dateLink, NOW())>3"
+    );
+
     const [userData] = await sqlPool.query(
       "select * from recovery where recoveryLink=?",
       [link]
     );
     if (userData.length === 0) {
       throw ApiError.BadRequest("Wrong recovery link");
-    }
-
-    const currentDate = new Date().getTime();
-
-    for (let i = 0; i < userData.length; i++) {
-      const dbDate = new Date(userData[0].dateLink).getTime();
-      const dateDiff = (currentDate - dbDate) / (60 * 1000);
-
-      if (dateDiff > 3) {
-        await sqlPool.query("delete from recovery where recoveryLink=?", link);
-      }
-    }
-
-    const dbDate = new Date(userData[0].dateLink).getTime();
-    const dateDiff = (currentDate - dbDate) / (60 * 1000);
-    if (dateDiff < 3) {
-      return userData[0];
     } else {
-      throw ApiError.BadRequest("Wrong recovery link");
+      return userData[0];
     }
   },
   setPassword: async (userId, password) => {
@@ -236,17 +223,13 @@ const userService = {
       "select * from users where role=0  LIMIT ? OFFSET ?", //where role=0
       [perPage, (page - 1) * perPage]
     );
-    const [count] = await sqlPool.query("select count(*) as total from users where role=0"); //where role=0
+    const [count] = await sqlPool.query(
+      "select count(*) as total from users where role=0"
+    ); //where role=0
     return { users: users, total: count[0].total };
   },
   sendEmail: async (Firstname, Lastname, Email, Phone, Message) => {
-    await mailService.sendQuestion(
-      Firstname,
-      Lastname,
-      Email,
-      Phone,
-      Message
-    );
+    await mailService.sendQuestion(Firstname, Lastname, Email, Phone, Message);
   },
 };
 

@@ -178,6 +178,11 @@ const productController = {
           models[i].id
         );
 
+        const [mediaLinks] = await sqlPool.query(
+          "Select mediacolorsize.id, modelId, mediaId, colorId, sizeId, mediaUrl from mediacolorsize inner join productmedias on productmedias.id=mediacolorsize.mediaId where modelId=?",
+          models[i].id
+        );
+
         const [descriptionLinks] = await sqlPool.query(
           "Select descriptioncolorsize.id, modelId, descriptionId, colorId, sizeId, descriptionEn, descriptionGe, descriptionRu from descriptioncolorsize inner join descriptions on descriptions.id=descriptioncolorsize.descriptionId where modelId=?",
           models[i].id
@@ -186,6 +191,7 @@ const productController = {
         models[i].colors = colors;
         models[i].sizes = sizes;
         models[i].imageLinks = imageLinks;
+        models[i].mediaLinks=mediaLinks;
         models[i].descriptionLinks = descriptionLinks;
       }
       // const [images] = await sqlPool.query(

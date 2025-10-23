@@ -5,6 +5,8 @@ const brandController = require("../controllers/userBrands.controller");
 
 router.get("/", brandController.getBrands);
 
+router.get("/byId", brandController.getBrandById);
+
 router.get("/byCategory", brandController.getBrandsForCategory);
 
 module.exports=router;

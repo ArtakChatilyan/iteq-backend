@@ -10,6 +10,16 @@ const brandController = {
       res.json({ state: error });
     }
   },
+  getBrandById: async (req, res) => {
+    try {
+      const {brandId}=req.query;
+      const [brand] = await sqlPool.query(`Select * from brands where id=?`, [brandId]);
+      res.json({ brand: brand[0] });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
   getBrandsForCategory: async(req, res)=>{
     try {
       let {catId}=req.query;

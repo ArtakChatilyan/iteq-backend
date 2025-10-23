@@ -56,6 +56,7 @@ const sliderRouter = require("./routes/slider.router");
 const partnerRouter = require("./routes/partners.router");
 const portfolioRouter = require("./routes/portfolio.router");
 const newsRouter = require("./routes/news.router");
+const questionsRouter=require("./routes/questions.router.js");
 const settingsRouter = require("./routes/settings.router");
 const ordersRouter=require("./routes/orders.router.js");
 
@@ -64,8 +65,10 @@ const userProductRouter = require("./routes/userProducts.router");
 const userPortfolioRouter = require("./routes/userPortfolio.router");
 const userPartnerRouter = require("./routes/userPartner.router");
 const userDiscountRouter = require("./routes/userDiscounts.router.js");
+const userBrandProductsRouter = require("./routes/userBrandProducts.router.js");
 const userBrandsRouter = require("./routes/userBrands.router.js");
 const userStoriesRouter = require("./routes/userStories.router.js");
+const userQuestionsRouter=require("./routes/userQuestions.router.js");
 const userSearchRouter = require("./routes/userSearch.router.js");
 
 const userRouter = require("./routes/users.router.js");
@@ -95,6 +98,7 @@ app.use("/api/v1/slides", sliderRouter);
 app.use("/api/v1/partners", partnerRouter);
 app.use("/api/v1/portfolio", portfolioRouter);
 app.use("/api/v1/news", newsRouter);
+app.use("/api/v1/questions", questionsRouter);
 app.use("/api/v1/settings", settingsRouter);
 app.use("/api/v1/orders", ordersRouter);
 
@@ -103,8 +107,10 @@ app.use("/api/v1/user/products", userProductRouter);
 app.use("/api/v1/user/portfolio", userPortfolioRouter);
 app.use("/api/v1/user/partners", userPartnerRouter);
 app.use("/api/v1/user/discounts", userDiscountRouter);
+app.use("/api/v1/user/brandProducts", userBrandProductsRouter);
 app.use("/api/v1/user/brands", userBrandsRouter);
 app.use("/api/v1/user/stories", userStoriesRouter);
+app.use("/api/v1/user/questions", userQuestionsRouter);
 app.use("/api/v1/user/search", userSearchRouter);
 app.use("/api/v1/user/basket", userBasketRouter);
 app.use("/api/v1/user/orders", userOrdersRouter);

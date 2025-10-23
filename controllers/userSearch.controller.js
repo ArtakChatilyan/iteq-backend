@@ -272,38 +272,143 @@ const seaechController = {
   getGeneral: async (req, res) => {
     try {
       const { term } = req.query;
-      const [searchBrands] = await sqlPool.query(
-        "select id, brandName as name from brands where brandName like ? LIMIT 3",
-        ["%" + term + "%"]
+      const terms = term.split(" ").filter(Boolean);
+
+      const lastTerm = terms[terms.length - 1];
+
+      const [resultBrands] = await sqlPool.query(
+        "SELECT id, brandName as name, 'brand' AS type FROM brands WHERE LOWER(brandName) like LOWER(?) LIMIT 3",
+        ["%" + lastTerm + "%"]
       );
-      searchBrands.forEach(b=>b.type="b");
-      const [searchModels] = await sqlPool.query(
-        "select id, nameEn as name from models where nameEn like ? or nameGe like ? or nameRu like ? LIMIT 3",
-        ["%" + term + "%", "%" + term + "%", "%" + term + "%"]
+
+      const [resultModels] = await sqlPool.query(
+        "SELECT id, nameEn as name, 'model' AS type FROM models WHERE LOWER(nameEn) like LOWER(?) LIMIT 3",
+        ["%" + lastTerm + "%"]
       );
-      searchModels.forEach(m=>m.type="m");
-      const [searchCategoriesEn] = await sqlPool.query(
-        "select id, nameEn as name from categories where nameEn like ? LIMIT 3",
-        ["%" + term + "%"]
+
+      const [resultCategoriesEn] = await sqlPool.query(
+        "SELECT id, nameEn as name, 'category' AS type FROM categories WHERE LOWER(nameEn) like LOWER(?) LIMIT 3",
+        ["%" + lastTerm + "%"]
       );
-      searchCategoriesEn.forEach(c=>c.type="c");
-      const [searchCategoriesGe] = await sqlPool.query(
-        "select id, nameGe as name from categories where nameGe like ? LIMIT 3",
-        ["%" + term + "%"]
+
+      const [resultCategoriesGe] = await sqlPool.query(
+        "SELECT id, nameGe as name, 'category' AS type FROM categories WHERE LOWER(nameGe) like LOWER(?) LIMIT 3",
+        ["%" + lastTerm + "%"]
       );
-      searchCategoriesGe.forEach(c=>c.type="c");
-      const [searchCategoriesRu] = await sqlPool.query(
-        "select id, nameRu name from categories where nameRu like ? LIMIT 3",
-        ["%" + term + "%"]
+
+      const [resultCategoriesRu] = await sqlPool.query(
+        "select id, nameRu name, 'category' AS type from categories where LOWER(nameRu) like LOWER(?) LIMIT 3",
+        ["%" + lastTerm + "%"]
       );
-      searchCategoriesRu.forEach(c=>c.type="c");
-      res.json({searchData:[...searchBrands, ...searchModels, ...searchCategoriesEn, ...searchCategoriesGe, ...searchCategoriesRu]});
+
+      res.json({
+        searchData: [
+          ...resultBrands,
+          ...resultModels,
+          ...resultCategoriesEn,
+          ...resultCategoriesGe,
+          ...resultCategoriesRu,
+        ],
+      });
     } catch (error) {
       console.log(error);
       res.json({ state: error });
     }
   },
-  getGeneralProducts: async (req, res) => {},
+  getGeneralProducts: async (req, res) => {
+    try {
+      const { term, page, perPage } = req.query;
+      const terms = term.trim().split(/\s+/).filter(Boolean);
+
+      const whereClause = terms
+        .map(
+          () => `
+        (Lower(categories.nameEn) like Lower(?) or Lower(categories.nameGe) like Lower(?) or Lower(categories.nameRu) like Lower(?)
+              or Lower(brands.brandName) like Lower(?) or Lower(models.nameEn) like Lower(?))
+      `
+        )
+        .join(" AND ");
+      const queryString = `Select DISTINCT products.id, productNameEn, productNameGe, productNameRu,productBrand, productInStock, 
+              (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
+              From products inner join productcategories ON products.id=productcategories.productId 
+              inner join categories on categories.id=productcategories.categoryId
+              inner join models on products.id=models.productId 
+              inner join brands on products.productBrand=brands.id
+              inner join modelsizes on modelsizes.modelId=models.id
+              where ${whereClause} and products.productInStock=1 LIMIT ? OFFSET ?`;
+
+      let [products] = await sqlPool.query(queryString, [
+        ...terms.flatMap((t) => Array(5).fill(`%${t}%`)),
+        parseInt(perPage),
+        (page - 1) * perPage,
+      ]);
+
+      for (let i = 0; i < products.length; i++) {
+        products[i].prices = [];
+        const [models] = await sqlPool.query(
+          "select * from models where productId=?",
+          [products[i].id]
+        );
+        if (models.length > 0) {
+          for (let j = 0; j < models.length; j++) {
+            const [sizes] = await sqlPool.query(
+              "select * from modelsizes where modelId=?",
+              [models[j].id]
+            );
+
+            if (sizes.length > 0) {
+              let sortedDiscounts = sizes
+                .filter((s) => s.discount === 1)
+                .sort((a, b) => a["newPrice"] - b["newPrice"]);
+              const minDiscountSize =
+                sortedDiscounts.length > 0 ? sortedDiscounts[0] : 0;
+              let sorted = sizes
+                .filter((s) => s.discount === 0)
+                .sort((a, b) => a["price"] - b["price"]);
+              const minSize = sorted.length > 0 ? sorted[0] : 0;
+
+              if (!minDiscountSize) {
+                models[j].viewInfo = minSize;
+              } else if (!minSize) {
+                models[j].viewInfo = minDiscountSize;
+              } else {
+                models[j].viewInfo =
+                  minDiscountSize.newPrice > minSize.price
+                    ? minSize
+                    : minDiscountSize;
+              }
+              for (let k = 0; k < sizes.length; k++) {
+                products[i].prices.push(
+                  sizes[k].discount === 1 ? sizes[k].newPrice : sizes[k].price
+                );
+              }
+            }
+          }
+          products[i].viewInfo = models.sort(compareModels)[0];
+        }
+      }
+
+      const queryStringTotal = `Select count(DISTINCT products.id) as total
+              From products inner join productcategories ON products.id=productcategories.productId 
+              inner join categories on categories.id=productcategories.categoryId
+              inner join models on products.id=models.productId 
+              inner join brands on products.productBrand=brands.id
+              inner join modelsizes on modelsizes.modelId=models.id
+              where ${whereClause} and products.productInStock=1`;
+      let [total] = await sqlPool.query(
+        queryStringTotal,
+        terms.flatMap((t) => Array(5).fill(`%${t}%`))
+      );
+
+      res.json({
+        products: products,
+        total: total[0].total,
+      });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
 };
 
 module.exports = seaechController;

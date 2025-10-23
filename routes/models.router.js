@@ -32,6 +32,12 @@ router.post('/modelImageColorSize', modelsController.setImageColorSize);
 
 router.delete('/modelImageColorSize/:id', modelsController.deleteImageColorSize);
 
+router.get('/modelMediaColorSize/:modelId/:mediaId', modelsController.getMediaColorSize);
+
+router.post('/modelMediaColorSize', modelsController.setMediaColorSize);
+
+router.delete('/modelMediaColorSize/:id', modelsController.deleteMediaColorSize);
+
 router.get('/modelDescriptionColorSize/:modelId/:descriptionId', modelsController.getDescriptionColorSize);
 
 router.post('/modelDescriptionColorSize', modelsController.setDescriptionColorSize);

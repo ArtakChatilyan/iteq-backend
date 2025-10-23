@@ -30,8 +30,6 @@ const productController = {
       const [rows] = await sqlPool.query(`Select * From products WHERE id=?`, [
         req.params.id,
       ]);
-      console.log(rows);
-      
       res.json({ data: rows[0] });
     } catch (error) {
       console.log(error);
@@ -576,6 +574,73 @@ const productController = {
       );
 
       await sqlPool.query(`DELETE FROM imagecolorsize WHERE imageId= ?`, [id]);
+
+      res.json({ data: result });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
+  getProductMedias: async (req, res) => {
+    try {
+      const [rows] = await sqlPool.query(
+        `Select * From productmedias WHERE productId=?`,
+        [req.params.id]
+      );
+      res.json({ data: rows });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
+  addProductMedia: async (req, res) => {
+    try {
+      const mediaUrl =
+        req.protocol +
+        "://" +
+        req.get("host") +
+        "/products/" +
+        req.file.filename;
+
+      const { prodId } = req.body;
+      const [result] = await sqlPool.query(
+        `INSERT INTO productmedias(mediaUrl, productId) VALUES (?,?)`,
+        [mediaUrl, prodId]
+      );
+      res.json({ id: result.insertId });
+    } catch (error) {
+      console.log(error);
+      res.json({ state: error });
+    }
+  },
+
+  deleteProductMedia: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const [medias] = await sqlPool.query(
+        `Select mediaUrl FROM productmedias WHERE id= ?`,
+        [id]
+      );
+
+      for (let i = 0; i < medias.length; i++) {
+        if (fs.existsSync("./products/" + path.basename(medias[i].mediaUrl))) {
+          fs.unlink("./products/" + path.basename(medias[i].mediaUrl), (err) => {
+            if (err) {
+              console.error(`Error removing file: ${err}`);
+              return;
+            }
+          });
+        }
+      }
+
+      const [result] = await sqlPool.query(
+        `DELETE FROM productmedias WHERE id= ?`,
+        [id]
+      );
+
+      await sqlPool.query(`DELETE FROM mediacolorsize WHERE mediaId= ?`, [id]);
 
       res.json({ data: result });
     } catch (error) {
