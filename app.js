@@ -1,12 +1,11 @@
 const express = require("express");
 const path = require("path");
-const app = express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const http = require("http");
+const { Server } = require("socket.io");
 
-//const http = require("http");
-//const { Server } = require("socket.io");
-
+const app = express();
 //const dataAccess = require("./database");
 const errorMiddleware = require("./middlewares/error-middleware.js");
 
@@ -38,7 +37,7 @@ app.use(
 
 //    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 //    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-//    res.setHeader('Access-Control-Allow-Credentials', true); 
+//    res.setHeader('Access-Control-Allow-Credentials', true);
 //    next();
 //  });
 
@@ -56,9 +55,9 @@ const sliderRouter = require("./routes/slider.router");
 const partnerRouter = require("./routes/partners.router");
 const portfolioRouter = require("./routes/portfolio.router");
 const newsRouter = require("./routes/news.router");
-const questionsRouter=require("./routes/questions.router.js");
+const questionsRouter = require("./routes/questions.router.js");
 const settingsRouter = require("./routes/settings.router");
-const ordersRouter=require("./routes/orders.router.js");
+const ordersRouter = require("./routes/orders.router.js");
 
 const userCategoryRouter = require("./routes/userCategories.router");
 const userProductRouter = require("./routes/userProducts.router");
@@ -68,13 +67,13 @@ const userDiscountRouter = require("./routes/userDiscounts.router.js");
 const userBrandProductsRouter = require("./routes/userBrandProducts.router.js");
 const userBrandsRouter = require("./routes/userBrands.router.js");
 const userStoriesRouter = require("./routes/userStories.router.js");
-const userQuestionsRouter=require("./routes/userQuestions.router.js");
+const userQuestionsRouter = require("./routes/userQuestions.router.js");
 const userSearchRouter = require("./routes/userSearch.router.js");
 
 const userRouter = require("./routes/users.router.js");
-const userBasketRouter=require("./routes/userBasket.router.js");
-const userOrdersRouter=require("./routes/userOrder.router.js");
-const userHistoryRouter=require("./routes/userHistory.router.js");
+const userBasketRouter = require("./routes/userBasket.router.js");
+const userOrdersRouter = require("./routes/userOrder.router.js");
+const userHistoryRouter = require("./routes/userHistory.router.js");
 //const chatService = require("./service/chat.service.js");
 
 app.use("/categories", express.static("categories"));
@@ -123,18 +122,44 @@ app.use("/api/v1/user/history", userHistoryRouter);
 
 app.use(errorMiddleware);
 
-//const server = http.createServer(app);
-// const io = new Server(server, {
-//   cors: {
-//     credentials: true,
-//     origin: ["https://localhost:3000", "http://localhost:3000"],
-//     methods: ["GET", "POST", "PUT", "DELETE"],
-//   },
-// });
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: ["https://iteq.shop", "https://www.iteq.shop"] },
+});
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // Join room by conversation ID
+  socket.on("join", (conversationId) => {
+    socket.join(`room_${conversationId}`);
+  });
+
+  // Receive message
+  socket.on("message", async (data) => {
+    const { conversationId, senderId, content } = data;
+
+    // Save message to MySQL
+    // await db.query('INSERT INTO messages ...', [conversationId, senderId, content]);
+
+    // Send to others in room
+    io.to(`room_${conversationId}`).emit("message", {
+      senderId,
+      content,
+      createdAt: new Date(),
+    });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
+//server.listen(3001, () => console.log('Socket.io server running on port 3001'));
 
 // io.on("connection", (socket) => {
 //   console.log("new user id:"+socket.id);
-  
+
 //   socket.on("send_message", (data)=>{
 //     io.emit("to_admin", data);
 //     console.log("data from user:"+socket.id);

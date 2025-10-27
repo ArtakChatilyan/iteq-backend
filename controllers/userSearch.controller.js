@@ -29,7 +29,7 @@ const seaechController = {
   },
   getProductsByBrand: async (req, res) => {
     try {
-      const { term, page, perPage } = req.query;
+      const { term, page, perPage, category } = req.query;
       const [searchData] = await sqlPool.query(
         "select id from brands where brandName = ?",
         [term]
@@ -38,8 +38,8 @@ const seaechController = {
         let [products] = await sqlPool.query(
           `Select products.id, productNameEn, productNameGe, productNameRu,productBrand, productInStock, 
         (Select imgUrl from productimages where productId=products.Id Limit 1) as imgUrl
-        From products where productBrand=? LIMIT ? OFFSET ?`,
-          [searchData[0].id, parseInt(perPage), (page - 1) * perPage]
+        From products inner join productcategories on products.id=productcategories.productId where productcategories.categoryId=? and productBrand=? LIMIT ? OFFSET ?`,
+          [category, searchData[0].id, parseInt(perPage), (page - 1) * perPage]
         );
 
         for (let i = 0; i < products.length; i++) {
@@ -89,8 +89,8 @@ const seaechController = {
         }
 
         [countResult] = await sqlPool.query(
-          `Select count(*) as total  from products where productBrand=?`,
-          [searchData[0].id]
+          `Select count(*) as total  from products inner join productcategories on products.id=productcategories.productId where productcategories.categoryId=? and productBrand=?`,
+          [category, searchData[0].id]
         );
         res.json({ products: products, total: countResult[0].total });
       } else {
