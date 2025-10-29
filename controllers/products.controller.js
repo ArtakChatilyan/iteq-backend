@@ -11,9 +11,12 @@ const productController = {
         `Select id, productNameEn, productNameGe, productNameRu, (select imgUrl from productimages where products.id=productimages.productId LIMIT 0,1) as imgUrl From products LIMIT ? OFFSET ?`,
         [perPage, (page - 1) * perPage]
       );
-      for(let i=0; i<rows.length; i++){
-        const [modelInfo]=await sqlPool.query("select id, nameEn from models where productId=?", [rows[i].id]);
-        rows[i].modelInfo=modelInfo;
+      for (let i = 0; i < rows.length; i++) {
+        const [modelInfo] = await sqlPool.query(
+          "select id, nameEn from models where productId=?",
+          [rows[i].id]
+        );
+        rows[i].modelInfo = modelInfo;
       }
       const [rowsCount] = await sqlPool.query(
         `Select count(*) as total From products`
@@ -65,6 +68,7 @@ const productController = {
         //optionsEn,
         //optionsGe,
         //optionsRu,
+        selectedCategory,
       } = req.body;
 
       // if (
@@ -128,6 +132,11 @@ const productController = {
         ]
       );
 
+      await sqlPool.query(
+        `insert into productcategories(productId, categoryId) values(?,?)`,
+        [result.insertId, selectedCategory]
+      );
+
       res.json({ id: result.insertId });
     } catch (error) {
       console.log(error);
@@ -188,7 +197,7 @@ const productController = {
       //   productPrice = 0;
 
       const { id } = req.params;
-      
+
       const [result] = await sqlPool.query(
         `UPDATE products SET productNameEn=?, productNameGe=?, productNameRu=?, 
             productBrand=?, productCountryEn=?,productCountryGe=?, productCountryRu=?, 
@@ -240,7 +249,10 @@ const productController = {
         `Select id, imgUrl FROM productimages WHERE productId= ?`,
         [id]
       );
-      const [models]=await sqlPool.query("Select * from models where productId=?", [id]);
+      const [models] = await sqlPool.query(
+        "Select * from models where productId=?",
+        [id]
+      );
       for (let i = 0; i < images.length; i++) {
         if (fs.existsSync("./products/" + path.basename(images[i].imgUrl))) {
           fs.unlink("./products/" + path.basename(images[i].imgUrl), (err) => {
@@ -256,11 +268,20 @@ const productController = {
         ]);
       }
 
-      for(let i=0; i<models.length; i++){
-        await sqlPool.query("Delete from descriptioncolorsize where modelId=?", [models[i].id]);
-        await sqlPool.query("Delete from imagecolorsize where modelId=?", [models[i].id]);
-        await sqlPool.query("Delete from modelcolors where modelId=?", [models[i].id]);
-        await sqlPool.query("Delete from modelsizes where modelId=?", [models[i].id]);
+      for (let i = 0; i < models.length; i++) {
+        await sqlPool.query(
+          "Delete from descriptioncolorsize where modelId=?",
+          [models[i].id]
+        );
+        await sqlPool.query("Delete from imagecolorsize where modelId=?", [
+          models[i].id,
+        ]);
+        await sqlPool.query("Delete from modelcolors where modelId=?", [
+          models[i].id,
+        ]);
+        await sqlPool.query("Delete from modelsizes where modelId=?", [
+          models[i].id,
+        ]);
         await sqlPool.query("Delete from models where id=?", [models[i].id]);
       }
       await sqlPool.query(`DELETE FROM productimages WHERE productId =?`, [id]);
@@ -274,7 +295,6 @@ const productController = {
 
       await sqlPool.query(`DELETE FROM productcolors WHERE productId =?`, [id]);
       await sqlPool.query(`DELETE FROM descriptions WHERE productId =?`, [id]);
-
 
       res.json({ data: result });
     } catch (error) {
@@ -396,7 +416,6 @@ const productController = {
   setProductCategories: async (req, res) => {
     try {
       const { id, result } = req.body;
-      console.log(result);
       await sqlPool.query(`delete from productcategories where productId=?`, [
         id,
       ]);
@@ -626,12 +645,15 @@ const productController = {
 
       for (let i = 0; i < medias.length; i++) {
         if (fs.existsSync("./products/" + path.basename(medias[i].mediaUrl))) {
-          fs.unlink("./products/" + path.basename(medias[i].mediaUrl), (err) => {
-            if (err) {
-              console.error(`Error removing file: ${err}`);
-              return;
+          fs.unlink(
+            "./products/" + path.basename(medias[i].mediaUrl),
+            (err) => {
+              if (err) {
+                console.error(`Error removing file: ${err}`);
+                return;
+              }
             }
-          });
+          );
         }
       }
 
@@ -706,19 +728,12 @@ const productController = {
 
   updateDescription: async (req, res) => {
     try {
-      let { name, descriptionEn, descriptionGe, descriptionRu } =
-        req.body;
+      let { name, descriptionEn, descriptionGe, descriptionRu } = req.body;
 
       const { descriptionId } = req.params;
       const [result] = await sqlPool.query(
         `UPDATE descriptions SET name=?, descriptionEn=?, descriptionGe=?, descriptionRu=? WHERE id=?`,
-        [
-          name,
-          descriptionEn,
-          descriptionGe,
-          descriptionRu,
-          descriptionId,
-        ]
+        [name, descriptionEn, descriptionGe, descriptionRu, descriptionId]
       );
       const rows = await sqlPool.query(
         `Select * From descriptions WHERE id=?`,
@@ -735,11 +750,15 @@ const productController = {
     try {
       const { descriptionId } = req.params;
 
-      const [result] =await sqlPool.query(`DELETE FROM descriptions WHERE id =?`, [
-        descriptionId,
-      ]);
+      const [result] = await sqlPool.query(
+        `DELETE FROM descriptions WHERE id =?`,
+        [descriptionId]
+      );
 
-      await sqlPool.query("DELETE FROM descriptioncolorsize where descriptionId=?", [descriptionId]);
+      await sqlPool.query(
+        "DELETE FROM descriptioncolorsize where descriptionId=?",
+        [descriptionId]
+      );
 
       res.json({ result: result });
     } catch (error) {
