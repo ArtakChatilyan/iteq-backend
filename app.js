@@ -84,6 +84,7 @@ app.use("/partners", express.static("partners"));
 app.use("/news", express.static("news"));
 app.use("/brands", express.static("brands"));
 app.use("/colors", express.static("colors"));
+app.use("/media", express.static("media"));
 
 app.use("/api/v1/users", userRouter);
 

@@ -88,7 +88,6 @@ const categoryController = {
         : "";
 
       const { nameEn, nameGe, nameRu, categoryOrder, onTop } = req.body;
-      console.log("categoryOrder:" + categoryOrder);
 
       const { id } = req.params;
       if (imgUrl) {
