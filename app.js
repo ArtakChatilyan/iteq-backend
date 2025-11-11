@@ -58,6 +58,7 @@ const newsRouter = require("./routes/news.router");
 const questionsRouter = require("./routes/questions.router.js");
 const settingsRouter = require("./routes/settings.router");
 const ordersRouter = require("./routes/orders.router.js");
+const visitRouter=require("./routes/visits.router.js")
 
 const userCategoryRouter = require("./routes/userCategories.router");
 const userProductRouter = require("./routes/userProducts.router");
@@ -101,6 +102,7 @@ app.use("/api/v1/news", newsRouter);
 app.use("/api/v1/questions", questionsRouter);
 app.use("/api/v1/settings", settingsRouter);
 app.use("/api/v1/orders", ordersRouter);
+app.use("/api/v1/visits", visitRouter);
 
 app.use("/api/v1/user/categories", userCategoryRouter);
 app.use("/api/v1/user/products", userProductRouter);
