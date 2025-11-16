@@ -31,10 +31,8 @@ const colorController = {
     try {
       const { nameEn, nameGe, nameRu } = req.body;
       const imgUrl = req.file
-        ? req.protocol +
-          "://" +
-          req.get("host") +
-          "/colors/" +
+        ? process.env.BASE_URL +
+          "colors/" +
           req.file.filename
         : "";
       const [result] = await sqlPool.query(
@@ -53,10 +51,8 @@ const colorController = {
       const { nameEn, nameGe, nameRu } = req.body;
       const { id } = req.params;
       const imgUrl = req.file
-        ? req.protocol +
-          "://" +
-          req.get("host") +
-          "/colors/" +
+        ? process.env.BASE_URL +
+          "colors/" +
           req.file.filename
         : "";
       if (imgUrl) {

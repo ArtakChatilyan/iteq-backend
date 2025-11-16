@@ -549,11 +549,7 @@ const productController = {
 
   addProductImage: async (req, res) => {
     try {
-      const imgUrl =
-        req.protocol +
-        "://" +
-        req.get("host") +
-        "/products/" +
+      const imgUrl =process.env.BASE_URL+"products/"+
         req.file.filename;
 
       const { prodId } = req.body;
@@ -617,10 +613,8 @@ const productController = {
   addProductMedia: async (req, res) => {
     try {
       const mediaUrl =
-        req.protocol +
-        "://" +
-        req.get("host") +
-        "/products/" +
+        process.env.BASE_URL +
+        "products/" +
         req.file.filename;
 
       const { prodId } = req.body;

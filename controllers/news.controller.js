@@ -33,7 +33,7 @@ const newsController = {
   addNews: async (req, res) => {
     try {
       const imgUrl =
-        req.protocol + "://" + req.get("host") + "/news/" + req.file.filename;
+        process.env.BASE_URL + "news/" + req.file.filename;
       console.log(req.body);
 
       const { titleEn, titleGe, titleRu, contentEn, contentGe, contentRu } =
@@ -52,7 +52,7 @@ const newsController = {
   updateNews: async (req, res) => {
     try {
       const imgUrl = req.file
-        ? req.protocol + "://" + req.get("host") + "/news/" + req.file.filename
+        ? process.env.BASE_URL + "news/" + req.file.filename
         : "";
 
       const { titleEn, titleGe, titleRu, contentEn, contentGe, contentRu } =

@@ -62,7 +62,7 @@ const settingsController = {
   updateMedia: async (req, res) => {
     try {
       const mediaUrl = req.file
-        ? req.protocol + "://" + req.get("host") + "/media/" + req.file.filename
+        ? process.env.BASE_URL + "media/" + req.file.filename
         : "";
 
       if (mediaUrl) {

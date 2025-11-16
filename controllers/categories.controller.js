@@ -62,10 +62,8 @@ const categoryController = {
     try {
       const { nameEn, nameGe, nameRu, categoryOrder, onTop } = req.body;
       const imgUrl =
-        req.protocol +
-        "://" +
-        req.get("host") +
-        "/categories/" +
+        process.env.BASE_URL +
+        "categories/" +
         req.file.filename;
       const [result] = await sqlPool.query(
         `INSERT INTO categories(nameEn, nameGe, nameRu, categoryOrder, imgUrl, onTop, parentId) VALUES (?,?,?,?,?,?,?)`,
@@ -80,10 +78,8 @@ const categoryController = {
   updateCategory: async (req, res) => {
     try {
       const imgUrl = req.file
-        ? req.protocol +
-          "://" +
-          req.get("host") +
-          "/categories/" +
+        ? process.env.BASE_URL +
+          "categories/" +
           req.file.filename
         : "";
 

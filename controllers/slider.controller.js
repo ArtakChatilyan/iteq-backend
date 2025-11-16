@@ -15,7 +15,7 @@ const sliderController = {
   addSlide: async (req, res) => {
     try {
       const itemUrl =
-        req.protocol + "://" + req.get("host") + "/slides/" + req.file.filename;
+        process.env.BASE_URL + "slides/" + req.file.filename;
 
       const { itemType } = req.body;
       const [result] = await sqlPool.query(

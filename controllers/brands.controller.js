@@ -47,7 +47,7 @@ const brandsController = {
   addBrand: async (req, res) => {
     try {
       const imgUrl =
-        req.protocol + "://" + req.get("host") + "/brands/" + req.file.filename;
+        process.env.BASE_URL + "brands/" + req.file.filename;
 
       const { brandName, brandUrl } = req.body;
       const [result] = await sqlPool.query(
@@ -64,10 +64,8 @@ const brandsController = {
   updateBrand: async (req, res) => {
     try {
       const imgUrl = req.file
-        ? req.protocol +
-          "://" +
-          req.get("host") +
-          "/brands/" +
+        ? process.env.BASE_URL +
+          "brands/" +
           req.file.filename
         : "";
 

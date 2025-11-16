@@ -34,10 +34,8 @@ const partnersController = {
   addPartner: async (req, res) => {
     try {
       const imgUrl =
-        req.protocol +
-        "://" +
-        req.get("host") +
-        "/partners/" +
+        process.env.BASE_URL +
+        "partners/" +
         req.file.filename;
 
       const { name, partnerUrl, contentEn, contentGe, contentRu } = req.body;
@@ -55,10 +53,8 @@ const partnersController = {
   updatePartner: async (req, res) => {
     try {
       const imgUrl = req.file
-        ? req.protocol +
-          "://" +
-          req.get("host") +
-          "/partners/" +
+        ? process.env.BASE_URL +
+          "partners/" +
           req.file.filename
         : "";
 

@@ -4,12 +4,10 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const http = require("http");
 const { Server } = require("socket.io");
+const { v4: uuidv4 } = require("uuid");
 
 const app = express();
-//const dataAccess = require("./database");
 const errorMiddleware = require("./middlewares/error-middleware.js");
-
-//app.use(cors());
 
 app.use(
   cors({
@@ -58,7 +56,7 @@ const newsRouter = require("./routes/news.router");
 const questionsRouter = require("./routes/questions.router.js");
 const settingsRouter = require("./routes/settings.router");
 const ordersRouter = require("./routes/orders.router.js");
-const visitRouter=require("./routes/visits.router.js")
+const visitRouter = require("./routes/visits.router.js");
 
 const userCategoryRouter = require("./routes/userCategories.router");
 const userProductRouter = require("./routes/userProducts.router");
@@ -75,6 +73,7 @@ const userRouter = require("./routes/users.router.js");
 const userBasketRouter = require("./routes/userBasket.router.js");
 const userOrdersRouter = require("./routes/userOrder.router.js");
 const userHistoryRouter = require("./routes/userHistory.router.js");
+const chatService = require("./service/chat.service.js");
 //const chatService = require("./service/chat.service.js");
 
 app.use("/categories", express.static("categories"));
@@ -118,67 +117,53 @@ app.use("/api/v1/user/basket", userBasketRouter);
 app.use("/api/v1/user/orders", userOrdersRouter);
 app.use("/api/v1/user/history", userHistoryRouter);
 
-// app.use((err, req, res, next) => {
-//   console.error(err.stack);
-//   res.status(500).send("Something broke!");
-// });
-
 app.use(errorMiddleware);
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: ["https://iteq.shop", "https://www.iteq.shop"] },
+  cors: { origin: ["https://localhost:3000", "http://localhost:3000"] }, //["https://iteq.shop", "https://www.iteq.shop"]
 });
 
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+const userSockets = new Map();
 
-  // Join room by conversation ID
-  socket.on("join", (conversationId) => {
-    socket.join(`room_${conversationId}`);
+io.on("connection", (socket) => {
+  //console.log("New socket connected:", socket.id);
+
+  socket.on("joinChat", async (userId) => {
+    if (!userId) {
+      userId = uuidv4();
+      //console.log("****");
+      
+    } 
+    //console.log("userId:" + userId );
+
+    userSockets.set(userId, socket.id);
+    socket.userId = userId;
+
+    // send chat history
+    socket.emit("chatHistory", chatService.getChatHistory(userId));
   });
 
-  // Receive message
-  socket.on("message", async (data) => {
-    const { conversationId, senderId, content } = data;
+  socket.on("sendMessage", async ({ userId, sender, message }) => {
+    chatService.addChatMessage(userId, sender, message);
 
-    // Save message to MySQL
-    // await db.query('INSERT INTO messages ...', [conversationId, senderId, content]);
-
-    // Send to others in room
-    io.to(`room_${conversationId}`).emit("message", {
-      senderId,
-      content,
-      createdAt: new Date(),
-    });
+    if (sender === "user") {
+      // send to admin
+      io.emit("newMessage", { userId, sender, message });
+    } else {
+      // send to specific user
+      const userSocketId = userSockets.get(userId);
+      if (userSocketId)
+        io.to(userSocketId).emit("newMessage", { sender, message });
+    }
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    userSockets.delete(socket.userId);
   });
 });
 
-//server.listen(3001, () => console.log('Socket.io server running on port 3001'));
-
-// io.on("connection", (socket) => {
-//   console.log("new user id:"+socket.id);
-
-//   socket.on("send_message", (data)=>{
-//     io.emit("to_admin", data);
-//     console.log("data from user:"+socket.id);
-//     console.log(data);
-//   })
-// });
-
-// const start = () => {
-//   try {
-//     server.listen(8080, () => {
-//       console.log("Server is running on port 8080");
-//     });
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
+//server.listen(3001, () => console.log("Socket.io server running on port 3001"));
 
 const start = () => {
   try {

@@ -124,10 +124,8 @@ const portfolioController = {
   addPortfolioImage: async (req, res) => {
     try {
       const imgUrl =
-        req.protocol +
-        "://" +
-        req.get("host") +
-        "/portfolio/" +
+        process.env.BASE_URL +
+        "portfolio/" +
         req.file.filename;
 
       const { portfolioId } = req.body;
