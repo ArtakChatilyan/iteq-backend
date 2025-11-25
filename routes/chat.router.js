@@ -4,9 +4,13 @@ const router = express.Router();
 const chatController=require('../controllers/chat.controller');
 
 
-router.get('/users', chatController.getMessages);
+//router.get('/users', chatController.getMessages);
 
 router.get('/messages/:userId', chatController.getUserMessages);
+
+router.get('/unread', chatController.getUnreadUsers);
+
+router.put("/seen/:userId", chatController.markAsSeen);
 
 // router.get('/all', brandController.getBrandsAll);
 

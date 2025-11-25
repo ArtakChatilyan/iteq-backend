@@ -1,8 +1,10 @@
 const express = require("express");
 const path = require("path");
+const fs=require("fs");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const http = require("http");
+const https=require("https");
 const { Server } = require("socket.io");
 const { v4: uuidv4 } = require("uuid");
 
@@ -57,6 +59,7 @@ const questionsRouter = require("./routes/questions.router.js");
 const settingsRouter = require("./routes/settings.router");
 const ordersRouter = require("./routes/orders.router.js");
 const visitRouter = require("./routes/visits.router.js");
+const chatRouter = require("./routes/chat.router.js");
 
 const userCategoryRouter = require("./routes/userCategories.router");
 const userProductRouter = require("./routes/userProducts.router");
@@ -74,7 +77,6 @@ const userBasketRouter = require("./routes/userBasket.router.js");
 const userOrdersRouter = require("./routes/userOrder.router.js");
 const userHistoryRouter = require("./routes/userHistory.router.js");
 const chatService = require("./service/chat.service.js");
-//const chatService = require("./service/chat.service.js");
 
 app.use("/categories", express.static("categories"));
 app.use("/products", express.static("products"));
@@ -102,6 +104,7 @@ app.use("/api/v1/questions", questionsRouter);
 app.use("/api/v1/settings", settingsRouter);
 app.use("/api/v1/orders", ordersRouter);
 app.use("/api/v1/visits", visitRouter);
+app.use("/api/v1/chat", chatRouter);
 
 app.use("/api/v1/user/categories", userCategoryRouter);
 app.use("/api/v1/user/products", userProductRouter);
@@ -120,50 +123,87 @@ app.use("/api/v1/user/history", userHistoryRouter);
 app.use(errorMiddleware);
 
 const server = http.createServer(app);
+// const server = https.createServer({
+//   key: fs.readFileSync("/etc/letsencrypt/live/iteq.shop/privkey.pem"),
+//   cert: fs.readFileSync("/etc/letsencrypt/live/iteq.shop/fullchain.pem"),
+// });
 const io = new Server(server, {
-  cors: { origin: ["https://localhost:3000", "http://localhost:3000"] }, //["https://iteq.shop", "https://www.iteq.shop"]
+  cors: { origin: ["https://iteq.shop", "https://www.iteq.shop", "https://localhost:3000", "http://localhost:3000"],
+    methods: ["GET", "POST"],
+   }, 
 });
 
 const userSockets = new Map();
+const activeUsers = new Map();
+
+function updateAdmins() {
+  const activeUserList = Array.from(userSockets.keys()).map((userId) => ({
+    userId,
+    lastMessage: activeUsers.get(userId)?.lastMessage || "",
+    lastTime: activeUsers.get(userId)?.lastTime || null,
+  }));
+
+  io.sockets.sockets.forEach((s) => {
+    if (s.role === "admin") {
+      s.emit("activeUsers", activeUserList);
+    }
+  });
+}
 
 io.on("connection", (socket) => {
-  //console.log("New socket connected:", socket.id);
-
-  socket.on("joinChat", async (userId) => {
-    if (!userId) {
+  socket.on("joinChat", async ({ userId, role }) => {
+    if (!userId && role === "user") {
       userId = uuidv4();
-      //console.log("****");
-      
-    } 
-    //console.log("userId:" + userId );
+    }
 
-    userSockets.set(userId, socket.id);
     socket.userId = userId;
+    socket.role = role;
 
-    // send chat history
-    socket.emit("chatHistory", chatService.getChatHistory(userId));
+    if (role === "user") userSockets.set(userId, socket.id);
+
+    if (!activeUsers.has(userId)) {
+      activeUsers.set(userId, { lastMessage: "", lastTime: null });
+    }
+
+    updateAdmins();
+    const history = (await chatService.getChatHistory(userId)) || {
+      messages: [],
+    };
+    socket.emit("chatHistory", { userId, messages: history });
   });
 
-  socket.on("sendMessage", async ({ userId, sender, message }) => {
-    chatService.addChatMessage(userId, sender, message);
+  socket.on("sendMessage", async ({ userId, sender, message, time }) => {
+    if (sender === "user") {
+      activeUsers.set(userId, { lastMessage: message, lastTime: time });
+      updateAdmins();
+    }
+    let isSeen = false;
+    
+    await chatService.addChatMessage({ userId, sender, message, time, isSeen });
+    const msg = { userId, sender, message, time, isSeen };
 
     if (sender === "user") {
-      // send to admin
-      io.emit("newMessage", { userId, sender, message });
+      // Send to all admins
+      io.sockets.sockets.forEach((s) => {
+        if (s.role === "admin") s.emit("newMessage", msg);
+      });
     } else {
-      // send to specific user
+      // Admin → specific user
       const userSocketId = userSockets.get(userId);
-      if (userSocketId)
-        io.to(userSocketId).emit("newMessage", { sender, message });
+      if (userSocketId) io.to(userSocketId).emit("newMessage", msg);
     }
   });
 
   socket.on("disconnect", () => {
-    userSockets.delete(socket.userId);
+    if (socket.role === "user") {
+      userSockets.delete(socket.userId);
+      activeUsers.delete(socket.userId);
+      updateAdmins();
+    }
   });
 });
 
-//server.listen(3001, () => console.log("Socket.io server running on port 3001"));
+server.listen(3001, () => console.log("Socket.io server running on port 3001"));
 
 const start = () => {
   try {

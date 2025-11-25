@@ -4,38 +4,29 @@ const chatService = {
   getChatHistory: async (userId) => {
     try {
       const [rows] = await sqlPool.query(
-        "SELECT * FROM messages WHERE user_id=? ORDER BY created_at ASC",
+        "SELECT id, user_id as userId, sender, message, created_at as time  FROM messages WHERE user_id=? ORDER BY created_at ASC",
         [userId]
       );
-      let resp={ userId, messages: rows };
-      console.log(resp);
-      return resp;
+      return rows;
     } catch (error) {
       console.log(error);
     }
   },
-  addChatMessage: async (userId, sender, message) => {
+  addChatMessage: async (msg) => {
+    const  {
+    userId,
+    sender,
+    message,
+    time,
+    is_seen
+  }=msg;
+  const mysqlDatetime = new Date().toISOString().slice(0, 19).replace("T", " ");
     await sqlPool.query(
-      "INSERT INTO messages (user_id, sender, message) VALUES (?, ?, ?)",
-      [userId, sender, message]
+      "INSERT INTO messages (user_id, sender, message, created_at, is_seen) VALUES (?, ?, ?, ?, ?)",
+      [userId, sender, message, time, is_seen ? 1 : 0]
     );
   },
-  // addChat: async (chatItem) => {
-  //   const { roomId, message, messageType, messageTime } = chatItem;
-  //   try {
-  //     const [rows] = await sqlPool.query(
-  //       "INSERT INTO chats(roomId, message, messageType, messageTime) VALUES (?,?,?, ?)",
-  //       [roomId, message, messageType, messageTime]
-  //     );
-
-  //     return 0;
-  //   } catch (error) {
-  //     return -1;
-  //   }
-  // },
-  // getChat: async () => {},
-  // getChats: async () => {},
-  // deleteChate: async () => {},
+  
 };
 
 module.exports = chatService;
