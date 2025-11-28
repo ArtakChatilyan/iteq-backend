@@ -1,10 +1,10 @@
 const express = require("express");
 const path = require("path");
-const fs=require("fs");
+const fs = require("fs");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const http = require("http");
-const https=require("https");
+const https = require("https");
 const { Server } = require("socket.io");
 const { v4: uuidv4 } = require("uuid");
 
@@ -122,88 +122,163 @@ app.use("/api/v1/user/history", userHistoryRouter);
 
 app.use(errorMiddleware);
 
-const server = http.createServer(app);
+const clients = new Map();
+
+app.get("/events/:clientId", (req, res) => {
+  const { clientId } = req.params;
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  clients.set(clientId, res);
+
+  req.on("close", () => {
+    clients.delete(clientId);
+  });
+});
+
+app.post("/send", async (req, res) => {
+
+  const { sender, userId, message, time, is_seen } = req.body;
+
+  chatService.addChatMessage({
+    userId,
+    sender,
+    message,
+    time,
+    is_seen,
+  });
+
+  const payload = {
+    sender,
+    userId,
+    message,
+    time: time || new Date().toISOString(),
+    is_seen: is_seen ?? 0,
+  };
+  
+  if (sender === "user") {
+    const adminClient = clients.get("admin");
+    if (adminClient) {
+      adminClient.write(`data: ${JSON.stringify(payload)}\n\n`);
+    }
+  }
+
+  if (sender === "admin") {
+    const userClient = clients.get(userId);
+    if (userClient) {
+      userClient.write(`data: ${JSON.stringify(payload)}\n\n`);
+    }
+  }
+
+  return res.json({ ok: true });
+});
+
+app.get("/connected-users", (req, res) => {
+  const list = [];
+
+  for (const [id] of clients.entries()) {
+    if (id !== "admin") list.push(id);
+  }
+
+  res.json(list);
+});
+
+app.listen(3001, () =>
+  console.log("SSE server running on http://localhost:3001")
+);
+
+//const server = http.createServer(app);
 // const server = https.createServer({
 //   key: fs.readFileSync("/etc/letsencrypt/live/iteq.shop/privkey.pem"),
 //   cert: fs.readFileSync("/etc/letsencrypt/live/iteq.shop/fullchain.pem"),
 // });
-const io = new Server(server, {
-  cors: { origin: ["https://iteq.shop", "https://www.iteq.shop", "https://localhost:3000", "http://localhost:3000"],
-    methods: ["GET", "POST"],
-   }, 
-});
+// const io = new Server(server, {
+//   path: "/socket.io/",
+//   cors: {
+//     origin: [
+//       "https://iteq.shop",
+//       "https://www.iteq.shop",
+//       "https://localhost:3000",
+//       "http://localhost:3000",
+//     ],
+//     methods: ["GET", "POST"],
+//   },
+// });
 
-const userSockets = new Map();
-const activeUsers = new Map();
+// const userSockets = new Map();
+// const activeUsers = new Map();
 
-function updateAdmins() {
-  const activeUserList = Array.from(userSockets.keys()).map((userId) => ({
-    userId,
-    lastMessage: activeUsers.get(userId)?.lastMessage || "",
-    lastTime: activeUsers.get(userId)?.lastTime || null,
-  }));
+// function updateAdmins() {
+//   const activeUserList = Array.from(userSockets.keys()).map((userId) => ({
+//     userId,
+//     lastMessage: activeUsers.get(userId)?.lastMessage || "",
+//     lastTime: activeUsers.get(userId)?.lastTime || null,
+//   }));
 
-  io.sockets.sockets.forEach((s) => {
-    if (s.role === "admin") {
-      s.emit("activeUsers", activeUserList);
-    }
-  });
-}
+//   io.sockets.sockets.forEach((s) => {
+//     if (s.role === "admin") {
+//       s.emit("activeUsers", activeUserList);
+//     }
+//   });
+// }
 
-io.on("connection", (socket) => {
-  socket.on("joinChat", async ({ userId, role }) => {
-    if (!userId && role === "user") {
-      userId = uuidv4();
-    }
+// io.on("connection", (socket) => {
+//   socket.on("joinChat", async ({ userId, role }) => {
+//     if (!userId && role === "user") {
+//       userId = uuidv4();
+//     }
 
-    socket.userId = userId;
-    socket.role = role;
+//     socket.userId = userId;
+//     socket.role = role;
 
-    if (role === "user") userSockets.set(userId, socket.id);
+//     if (role === "user") userSockets.set(userId, socket.id);
 
-    if (!activeUsers.has(userId)) {
-      activeUsers.set(userId, { lastMessage: "", lastTime: null });
-    }
+//     if (!activeUsers.has(userId)) {
+//       activeUsers.set(userId, { lastMessage: "", lastTime: null });
+//     }
 
-    updateAdmins();
-    const history = (await chatService.getChatHistory(userId)) || {
-      messages: [],
-    };
-    socket.emit("chatHistory", { userId, messages: history });
-  });
+//     updateAdmins();
+//     const history = (await chatService.getChatHistory(userId)) || {
+//       messages: [],
+//     };
+//     socket.emit("chatHistory", { userId, messages: history });
+//   });
 
-  socket.on("sendMessage", async ({ userId, sender, message, time }) => {
-    if (sender === "user") {
-      activeUsers.set(userId, { lastMessage: message, lastTime: time });
-      updateAdmins();
-    }
-    let isSeen = false;
-    
-    await chatService.addChatMessage({ userId, sender, message, time, isSeen });
-    const msg = { userId, sender, message, time, isSeen };
+//   socket.on("sendMessage", async ({ userId, sender, message, time }) => {
+//     if (sender === "user") {
+//       activeUsers.set(userId, { lastMessage: message, lastTime: time });
+//       updateAdmins();
+//     }
+//     let isSeen = false;
 
-    if (sender === "user") {
-      // Send to all admins
-      io.sockets.sockets.forEach((s) => {
-        if (s.role === "admin") s.emit("newMessage", msg);
-      });
-    } else {
-      // Admin → specific user
-      const userSocketId = userSockets.get(userId);
-      if (userSocketId) io.to(userSocketId).emit("newMessage", msg);
-    }
-  });
+//     await chatService.addChatMessage({ userId, sender, message, time, isSeen });
+//     const msg = { userId, sender, message, time, isSeen };
 
-  socket.on("disconnect", () => {
-    if (socket.role === "user") {
-      userSockets.delete(socket.userId);
-      activeUsers.delete(socket.userId);
-      updateAdmins();
-    }
-  });
-});
+//     if (sender === "user") {
+//       // Send to all admins
+//       io.sockets.sockets.forEach((s) => {
+//         if (s.role === "admin") s.emit("newMessage", msg);
+//       });
+//     } else {
+//       // Admin → specific user
+//       const userSocketId = userSockets.get(userId);
+//       if (userSocketId) io.to(userSocketId).emit("newMessage", msg);
+//     }
+//   });
 
-server.listen(3001, () => console.log("Socket.io server running on port 3001"));
+//   socket.on("disconnect", () => {
+//     if (socket.role === "user") {
+//       userSockets.delete(socket.userId);
+//       activeUsers.delete(socket.userId);
+//       updateAdmins();
+//     }
+//   });
+// });
+
+// server.listen(3001, () => console.log("Socket.io server running on port 3001"));
 
 const start = () => {
   try {

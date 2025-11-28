@@ -20,7 +20,6 @@ const chatService = {
     time,
     is_seen
   }=msg;
-  const mysqlDatetime = new Date().toISOString().slice(0, 19).replace("T", " ");
     await sqlPool.query(
       "INSERT INTO messages (user_id, sender, message, created_at, is_seen) VALUES (?, ?, ?, ?, ?)",
       [userId, sender, message, time, is_seen ? 1 : 0]
